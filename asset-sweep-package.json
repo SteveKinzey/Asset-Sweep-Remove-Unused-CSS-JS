@@ -1,0 +1,74 @@
+{
+  "name": "asset-sweep",
+  "version": "1.0.0",
+  "description": "Automatically detect and remove unused CSS and JavaScript from your web projects",
+  "keywords": [
+    "css",
+    "javascript",
+    "unused",
+    "cleanup",
+    "performance",
+    "optimization",
+    "dead-code",
+    "bundle-size",
+    "web-performance"
+  ],
+  "author": "Steve Kinzey <steve@example.com>",
+  "license": "MIT",
+  "homepage": "https://github.com/SteveKinzey/Asset-Sweep-Remove-Unused-CSS-JS#readme",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/SteveKinzey/Asset-Sweep-Remove-Unused-CSS-JS.git"
+  },
+  "bugs": {
+    "url": "https://github.com/SteveKinzey/Asset-Sweep-Remove-Unused-CSS-JS/issues"
+  },
+  "engines": {
+    "node": ">=14.0.0",
+    "npm": ">=6.0.0"
+  },
+  "bin": {
+    "asset-sweep": "bin/cli.js"
+  },
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist",
+    "bin",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "dev": "node --loader tsx ./src/index.ts",
+    "build": "tsc",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage",
+    "lint": "eslint src --ext .ts,.tsx,.js,.jsx",
+    "lint:fix": "eslint src --ext .ts,.tsx,.js,.jsx --fix",
+    "format": "prettier --write \"src/**/*.{ts,tsx,js,jsx,json,md}\"",
+    "type-check": "tsc --noEmit",
+    "benchmark": "node scripts/benchmark.js",
+    "prepublishOnly": "npm run build && npm run test"
+  },
+  "dependencies": {
+    "glob": "^10.3.0",
+    "minimist": "^1.2.8",
+    "chalk": "^5.3.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.5.0",
+    "@types/jest": "^29.5.3",
+    "@typescript-eslint/eslint-plugin": "^6.2.0",
+    "@typescript-eslint/parser": "^6.2.0",
+    "eslint": "^8.46.0",
+    "prettier": "^3.0.0",
+    "typescript": "^5.1.0",
+    "jest": "^29.6.2",
+    "ts-jest": "^29.1.1",
+    "tsx": "^3.12.0"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}
