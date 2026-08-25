@@ -30,3 +30,25 @@ test('malformed config rejects rather than silently defaulting', async () => {
   await writeFile(join(dir, '.asset-sweeprc.json'), '{ not json')
   await expect(loadConfig(dir)).rejects.toThrow(/\.asset-sweeprc\.json/)
 })
+
+test('a wrong-typed array field is rejected with the offending key named', async () => {
+  const dir = await mkdtemp(join(tmpdir(), 'as-'))
+  await writeFile(join(dir, '.asset-sweeprc.json'),
+    JSON.stringify({ ignoreClasses: 'foo' }))
+  await expect(loadConfig(dir)).rejects.toThrow(/ignoreClasses/)
+})
+
+test('a wrong-typed boolean field is rejected with the offending key named', async () => {
+  const dir = await mkdtemp(join(tmpdir(), 'as-'))
+  await writeFile(join(dir, '.asset-sweeprc.json'),
+    JSON.stringify({ safeMode: 'yes' }))
+  await expect(loadConfig(dir)).rejects.toThrow(/safeMode/)
+})
+
+test('an unknown key is tolerated silently', async () => {
+  const dir = await mkdtemp(join(tmpdir(), 'as-'))
+  await writeFile(join(dir, '.asset-sweeprc.json'),
+    JSON.stringify({ futureFeature: true }))
+  const cfg = await loadConfig(dir)
+  expect(cfg).toEqual(DEFAULT_CONFIG)
+})
