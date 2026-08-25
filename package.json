@@ -1,6 +1,6 @@
 {
   "name": "asset-sweep",
-  "version": "1.0.0",
+  "version": "0.0.0",
   "description": "Automatically detect and remove unused CSS and JavaScript from your web projects",
   "keywords": [
     "css",
@@ -13,7 +13,7 @@
     "bundle-size",
     "web-performance"
   ],
-  "author": "Steve Kinzey <steve@example.com>",
+  "author": "Steve Kinzey (https://github.com/SteveKinzey)",
   "license": "MIT",
   "homepage": "https://github.com/SteveKinzey/Asset-Sweep-Remove-Unused-CSS-JS#readme",
   "repository": {
@@ -24,8 +24,8 @@
     "url": "https://github.com/SteveKinzey/Asset-Sweep-Remove-Unused-CSS-JS/issues"
   },
   "engines": {
-    "node": ">=14.0.0",
-    "npm": ">=6.0.0"
+    "node": ">=18.0.0",
+    "npm": ">=9.0.0"
   },
   "bin": {
     "asset-sweep": "bin/cli.js"

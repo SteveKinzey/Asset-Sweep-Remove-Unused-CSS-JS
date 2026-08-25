@@ -4,7 +4,7 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg "Asset Sweep is released under the MIT License")](./LICENSE)
 [![Status: Pre-Alpha](https://img.shields.io/badge/status-pre--alpha-orange.svg "Asset Sweep is in early development")](#-project-status)
-[![Node.js](https://img.shields.io/badge/node-%3E%3D14.0.0-brightgreen.svg "Requires Node.js 14 or later")](https://nodejs.org)
+[![Node.js](https://img.shields.io/badge/node-%3E%3D18.0.0-brightgreen.svg "Requires Node.js 18 or later")](https://nodejs.org)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-blue.svg "Contributions are welcome")](./CONTRIBUTING.md)
 
 ---
@@ -118,7 +118,7 @@ npm run build
 npm link
 ```
 
-**Requirements:** Node.js >= 14.0.0, npm >= 6.0.0
+**Requirements:** Node.js >= 18.0.0, npm >= 9.0.0
 
 ---
 

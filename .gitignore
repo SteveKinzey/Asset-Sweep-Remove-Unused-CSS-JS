@@ -1,6 +1,8 @@
 # Dependencies
 node_modules/
-package-lock.json
+
+# Lockfiles are committed for this app so `npm ci` works in CI.
+# Ignore only the lockfiles of package managers this project does not use.
 yarn.lock
 pnpm-lock.yaml
 
