@@ -104,6 +104,42 @@ test('finds a class inside a <template> nested inside another <template>', () =>
   expect(inner?.line).toBe(3)
 })
 
+test('finds a class used only inside a <noscript> element', () => {
+  const source = [
+    '<div class="page">',
+    '  <noscript>',
+    '    <div class="n-class">JS is disabled</div>',
+    '  </noscript>',
+    '</div>',
+  ].join('\n')
+  const tokens = parseHtml(source, 'i.html')
+
+  expect(tokens.map(t => t.value).sort()).toEqual(['n-class', 'page'])
+
+  const noscriptClass = tokens.find(t => t.value === 'n-class')
+  expect(noscriptClass?.file).toBe('i.html')
+  expect(noscriptClass?.line).toBe(3)
+})
+
+test('a class-shaped string inside an inline <script> produces no usage token (scriptingEnabled must not leak into <script>)', () => {
+  const source = [
+    '<div class="page">',
+    '  <script>',
+    '    var s = \'<div class="phantom"></div>\';',
+    '  </script>',
+    '</div>',
+  ].join('\n')
+  const tokens = parseHtml(source, 'i.html')
+
+  // "phantom" must NOT appear as a usage token: <script> contents are
+  // always raw text regardless of scriptingEnabled, so this string
+  // literal must never be parsed as markup. If it were, .phantom would
+  // wrongly look "used" and the scanner would never flag genuinely dead
+  // CSS — a false negative, the trap this test guards against.
+  expect(tokens.map(t => t.value)).not.toContain('phantom')
+  expect(tokens.map(t => t.value).sort()).toEqual(['page'])
+})
+
 test('ordinary markup outside any <template> still works alongside template contents', () => {
   const source = [
     '<body class="page">',
