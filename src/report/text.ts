@@ -25,11 +25,26 @@ export function renderText(result: ScanResult): string {
     if (group.length === 0) {
       continue
     }
+
+    // Collect distinct reasons
+    const distinctReasons = Array.from(new Set(group.map(f => f.reason)))
+
     lines.push(`${level.toUpperCase()} confidence (${group.length})`)
-    for (const f of group) {
-      lines.push(`  .${f.name}  ${f.file}:${f.line}  ${f.bytes} bytes`)
+
+    if (distinctReasons.length === 1) {
+      // Single reason: print group-level "why:" line (preserves Phase 1 output)
+      for (const f of group) {
+        lines.push(`  .${f.name}  ${f.file}:${f.line}  ${f.bytes} bytes`)
+      }
+      lines.push(`  why: ${distinctReasons[0]}`)
+    } else {
+      // Multiple reasons: print each finding's reason with that finding
+      for (const f of group) {
+        lines.push(`  .${f.name}  ${f.file}:${f.line}  ${f.bytes} bytes`)
+        lines.push(`    reason: ${f.reason}`)
+      }
     }
-    lines.push(`  why: ${group[0].reason}`)
+
     lines.push('')
   }
 

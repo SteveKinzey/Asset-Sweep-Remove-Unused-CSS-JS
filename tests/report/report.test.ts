@@ -35,3 +35,48 @@ test('a clean project reports no unused assets rather than an empty table', () =
   }
   expect(renderText(clean)).toMatch(/no unused/i)
 })
+
+test('a group with two findings with the same reason prints one why line', () => {
+  const sameReasons: ScanResult = {
+    summary: { ...result.summary, unusedCss: 2 },
+    findings: [
+      { type: 'css-selector', name: 'ghost', file: 'a.css', line: 3,
+        column: 1, bytes: 1200, confidence: 'medium',
+        reason: 'JavaScript was not analyzed.' },
+      { type: 'css-selector', name: 'unused', file: 'a.css', line: 5,
+        column: 1, bytes: 300, confidence: 'medium',
+        reason: 'JavaScript was not analyzed.' }
+    ],
+    errors: [],
+  }
+  const out = renderText(sameReasons)
+  // Should print both findings
+  expect(out).toContain('ghost')
+  expect(out).toContain('unused')
+  // Should have exactly one "why:" line for this group
+  const whyLines = out.split('\n').filter(l => l.includes('why:'))
+  expect(whyLines.length).toBe(1)
+  expect(whyLines[0]).toContain('JavaScript was not analyzed.')
+})
+
+test('a group with two findings with different reasons prints each reason with its finding', () => {
+  const differentReasons: ScanResult = {
+    summary: { ...result.summary, unusedCss: 2 },
+    findings: [
+      { type: 'css-selector', name: 'ghost', file: 'a.css', line: 3,
+        column: 1, bytes: 1200, confidence: 'medium',
+        reason: 'JavaScript was not analyzed.' },
+      { type: 'css-selector', name: 'unused', file: 'a.css', line: 5,
+        column: 1, bytes: 300, confidence: 'medium',
+        reason: 'Not used in HTML.' }
+    ],
+    errors: [],
+  }
+  const out = renderText(differentReasons)
+  // Should have both reasons (old code would only have the first)
+  expect(out).toContain('JavaScript was not analyzed.')
+  expect(out).toContain('Not used in HTML.')
+  // Should have both findings
+  expect(out).toContain('ghost')
+  expect(out).toContain('unused')
+})
