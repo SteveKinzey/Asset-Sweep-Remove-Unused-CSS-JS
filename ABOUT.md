@@ -1,9 +1,11 @@
 # About Asset Sweep
 
-> **Status:** Asset Sweep is pre-alpha. Nothing described here is implemented yet.
-> This document records the intended design and the reasoning behind it. For what
-> the tool aims to do and how it compares to existing options, see the
-> [README](./README.md).
+> **Status:** Asset Sweep is pre-alpha. The CSS-vs-HTML half of the "Collection"
+> and "Cross-reference" phases below is implemented and working (`asset-sweep scan`);
+> JavaScript analysis, the `clean` command, and everything else described here as
+> "intended" is not built yet. This document records the intended design and the
+> reasoning behind it. For the current, precise split of what runs today versus
+> what's planned, see the [README's Project Status](./README.md#-project-status).
 
 ## Why build another cleanup tool
 
@@ -54,8 +56,8 @@ an explicit flag to modify files are what make automated removal defensible.
 
 Roughly in order of intended priority:
 
-- Core scanner and the `scan` command
-- `clean` with dry-run, backups, and safe mode
+- Core scanner and the `scan` command *(done for CSS-vs-HTML; JavaScript analysis still pending)*
+- `clean` with dry-run, backups, and safe mode *(not started)*
 - Vite and webpack plugins
 - CSS-in-JS support (styled-components, Emotion)
 - Editor integration for inline feedback
@@ -71,6 +73,7 @@ no configuration to be useful.
 
 ## Contributing
 
-The scanner does not exist yet, which makes this an unusually good time to shape
-it. See [CONTRIBUTING.md](./CONTRIBUTING.md) and the
+Only the CSS-vs-HTML scanner exists so far — JavaScript analysis, `clean`, and
+everything past that is still unbuilt, which makes this an unusually good time to
+shape it. See [CONTRIBUTING.md](./CONTRIBUTING.md) and the
 [open issues](https://github.com/SteveKinzey/Asset-Sweep-Remove-Unused-CSS-JS/issues).

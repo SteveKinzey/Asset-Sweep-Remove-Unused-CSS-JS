@@ -1,0 +1,6 @@
+.used { color: red }
+.ghost { color: blue }
+.js-runtime { color: green }
+/* .commented-out { color: black } */
+#used-id { color: red }
+#ghost-id { color: blue }

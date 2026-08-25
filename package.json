@@ -2,6 +2,18 @@
   "name": "asset-sweep",
   "version": "0.0.0",
   "private": true,
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "bin": {
+    "asset-sweep": "bin/cli.js"
+  },
+  "files": [
+    "dist",
+    "bin",
+    "README.md",
+    "LICENSE"
+  ],
   "description": "Automatically detect and remove unused CSS and JavaScript from your web projects",
   "keywords": [
     "css",
@@ -31,9 +43,9 @@
   "scripts": {
     "dev": "tsx src/index.ts",
     "build": "tsc",
-    "test": "jest",
-    "test:watch": "jest --watch",
-    "test:coverage": "jest --coverage",
+    "test": "NODE_OPTIONS=--experimental-vm-modules jest",
+    "test:watch": "NODE_OPTIONS=--experimental-vm-modules jest --watch",
+    "test:coverage": "NODE_OPTIONS=--experimental-vm-modules jest --coverage",
     "lint": "eslint src --ext .ts,.tsx,.js,.jsx",
     "lint:fix": "eslint src --ext .ts,.tsx,.js,.jsx --fix",
     "format": "prettier --write \"src/**/*.{ts,tsx,js,jsx,json,md}\"",
@@ -45,18 +57,21 @@
   "dependencies": {
     "glob": "^10.3.0",
     "minimist": "^1.2.8",
-    "chalk": "^5.3.0"
+    "parse5": "^8.0.1",
+    "postcss": "^8.5.26",
+    "postcss-selector-parser": "^7.1.5"
   },
   "devDependencies": {
-    "@types/node": "^20.14.0",
     "@types/jest": "^29.5.3",
+    "@types/minimist": "^1.2.5",
+    "@types/node": "^20.14.0",
     "@typescript-eslint/eslint-plugin": "^8.0.0",
     "@typescript-eslint/parser": "^8.0.0",
     "eslint": "^8.57.0",
-    "prettier": "^3.0.0",
-    "typescript": "^5.1.0",
     "jest": "^29.6.2",
+    "prettier": "^3.0.0",
     "ts-jest": "^29.1.1",
-    "tsx": "^4.7.0"
+    "tsx": "^4.7.0",
+    "typescript": "^5.1.0"
   }
 }
