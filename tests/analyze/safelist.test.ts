@@ -33,19 +33,40 @@ test('ignoreSelectors matches the full raw selector', () => {
   expect(isSafelisted(def('x', '[data-toggle]'), cfg)).toBe(true)
 })
 
-test('ignoreSelectors supports glob wildcards, matched against the raw selector', () => {
-  const cfg = { ...DEFAULT_CONFIG, ignoreSelectors: ['[data-v-*]'] }
-  expect(isSafelisted(def('x', '[data-v-123] .x'), cfg)).toBe(true)
-})
-
 test('an exact ignoreSelectors pattern (no wildcard) still matches exactly, as before', () => {
   const cfg = { ...DEFAULT_CONFIG, ignoreSelectors: ['[data-toggle]'] }
   expect(isSafelisted(def('x', '[data-toggle]'), cfg)).toBe(true)
   expect(isSafelisted(def('x', 'totally-unrelated'), cfg)).toBe(false)
 })
 
+// Regression test for a real bug: unanchored matching let a short pattern
+// like "a" swallow every selector containing that substring — ".alpha"
+// AND ".beta" both got silently safelisted. A false positive is loud (the
+// user sees a wrong finding); a safelist silently eating real dead CSS is
+// not, and is strictly worse. ignoreSelectors must be anchored just like
+// ignoreClasses so a short/generic pattern can't match everything.
+test('a short ignoreSelectors pattern does not swallow unrelated selectors', () => {
+  const cfg = { ...DEFAULT_CONFIG, ignoreSelectors: ['a'] }
+  expect(isSafelisted(def('alpha', '.alpha'), cfg)).toBe(false)
+  expect(isSafelisted(def('beta', '.beta'), cfg)).toBe(false)
+})
+
+// The documented Vue scoped-styles recipe: under anchored matching,
+// "[data-v-*]" alone cannot match "[data-v-1] .scoped" (it doesn't cover
+// the trailing " .scoped"). "[data-v-*] *" covers the whole selector and
+// is the pattern actually documented in the README.
+test('the documented Vue scoped-styles pattern safelists a compound data-v selector', () => {
+  const cfg = { ...DEFAULT_CONFIG, ignoreSelectors: ['[data-v-*] *'] }
+  expect(isSafelisted(def('scoped', '[data-v-1] .scoped'), cfg)).toBe(true)
+})
+
+test('the documented Vue scoped-styles pattern does not safelist an unrelated selector', () => {
+  const cfg = { ...DEFAULT_CONFIG, ignoreSelectors: ['[data-v-*] *'] }
+  expect(isSafelisted(def('alpha', '.alpha'), cfg)).toBe(false)
+})
+
 test('a non-matching ignoreSelectors glob does not safelist', () => {
-  const cfg = { ...DEFAULT_CONFIG, ignoreSelectors: ['[data-v-*]'] }
+  const cfg = { ...DEFAULT_CONFIG, ignoreSelectors: ['[data-v-*] *'] }
   expect(isSafelisted(def('x', '.unrelated'), cfg)).toBe(false)
 })
 

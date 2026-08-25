@@ -240,7 +240,7 @@ Create `.asset-sweeprc.json` in your project root, or add an `assetSweep` key to
 |---|---|---|---|
 | `include` | `string[]` | `**/*.{html,js,jsx,ts,tsx,vue,svelte,css}` | Files to analyze |
 | `exclude` | `string[]` | `**/node_modules/**,**/dist/**` | Files to skip |
-| `ignoreSelectors` | `string[]` | `[]` | Full CSS selector patterns (glob, matched against the raw selector text) to always preserve |
+| `ignoreSelectors` | `string[]` | `[]` | CSS selector patterns to always preserve. Glob (`*`), anchored — the pattern must match the entire raw selector text of the rule, not a fragment of it |
 | `ignoreClasses` | `string[]` | `[]` | Class name patterns (glob) to always preserve |
 | `preserveComments` | `boolean` | `false` | Reserved for `clean` (keep comments in modified CSS/JS) — accepted and validated today, but has no effect since `clean` doesn't exist yet |
 | `safeMode` | `boolean` | `false` | Reserved for `clean` (conservative removal) — accepted and validated today, but has no effect since `clean` doesn't exist yet |
@@ -280,10 +280,10 @@ asset-sweep scan ./src --include "**/*.{vue,js,ts,css}"
 
 `.vue` files are not parsed yet either (see the reality check above) — Single File Component `<template>` markup is invisible to `scan` today, so classes used only inside `.vue` templates will be misreported as unused until safelisted or until `.vue` support ships.
 
-Vue scoped styles compile to `data-v-*` attributes — safelist them:
+Vue scoped styles compile to `data-v-*` attributes — safelist them. `ignoreSelectors` patterns are anchored (like `ignoreClasses`): the pattern must match the **entire** raw selector text of the rule, not just a fragment of it. A compiled scoped-style rule looks like `[data-v-f3f3eg9] .my-class { ... }`, so `"[data-v-*]"` alone won't match it — it doesn't cover the trailing ` .my-class`. Cover the whole selector instead:
 
 ```json
-{ "ignoreSelectors": ["[data-v-*]"] }
+{ "ignoreSelectors": ["[data-v-*] *"] }
 ```
 
 ### Static HTML sites
