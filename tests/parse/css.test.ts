@@ -26,3 +26,28 @@ test('records line numbers and rule byte size', () => {
   expect(def.line).toBe(3)
   expect(def.bytes).toBeGreaterThan(0)
 })
+
+test('does not treat a :not() argument as a definition', () => {
+  const defs = parseCss('.a:not(.b) { color: red }', 'a.css')
+  expect(defs.map(d => d.name)).toEqual(['a'])
+})
+
+test('does not treat an :is() argument as a definition', () => {
+  const defs = parseCss('.a:is(.b, .c) { color: red }', 'a.css')
+  expect(defs.map(d => d.name)).toEqual(['a'])
+})
+
+test('does not treat a :where() argument as a definition', () => {
+  const defs = parseCss('.a:where(.b) { color: red }', 'a.css')
+  expect(defs.map(d => d.name)).toEqual(['a'])
+})
+
+test('does not treat a :has() argument as a definition', () => {
+  const defs = parseCss('.a:has(.b) { color: red }', 'a.css')
+  expect(defs.map(d => d.name)).toEqual(['a'])
+})
+
+test('an ordinary compound and descendant selector still yields both classes', () => {
+  const defs = parseCss('.btn:hover .icon { color: red }', 'a.css')
+  expect(defs.map(d => d.name).sort()).toEqual(['btn', 'icon'])
+})
