@@ -55,7 +55,6 @@
     "verify:artifacts": "node -e \"const fs=require('fs'),m=['dist/index.js','bin/cli.js'].filter(p=>!fs.existsSync(p));if(m.length){console.error('\\u2716 refusing to publish, missing build output: '+m.join(', '));process.exit(1)}console.log('\\u2714 build artifacts present')\""
   },
   "dependencies": {
-    "chalk": "^5.3.0",
     "glob": "^10.3.0",
     "minimist": "^1.2.8",
     "parse5": "^8.0.1",
