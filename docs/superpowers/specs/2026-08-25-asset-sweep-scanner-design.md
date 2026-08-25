@@ -260,6 +260,7 @@ Added as runtime dependencies:
 | Package | Purpose |
 |---|---|
 | `postcss` | CSS AST |
+| `postcss-selector-parser` | Extract class/id names from selector strings without regex misreads |
 | `@babel/parser` | JS/TS/JSX syntax |
 | `@babel/traverse` | AST walking |
 | `@babel/types` | AST node predicates |
