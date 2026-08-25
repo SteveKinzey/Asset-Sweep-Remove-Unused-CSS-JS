@@ -5,6 +5,27 @@ import { scan } from './scan.js'
 import { renderText } from './report/text.js'
 import { renderJson } from './report/json.js'
 
+// A future `clean` command deletes what this tool reports, and --threshold
+// gates CI on that report, so a threshold that silently fails to parse
+// (Number('abc') is NaN, and `ratio > NaN` is always false) makes the CI
+// check permanently green instead of catching regressions. Returns null for
+// anything that isn't a finite number in [0, 100] — including minimist's
+// `true` for a bare `--threshold` with no value, which must be rejected
+// rather than coerced to 1.
+function parseThreshold(raw: unknown): number | null {
+  if (typeof raw === 'boolean') {
+    return null
+  }
+  if (raw === undefined) {
+    return 0
+  }
+  const n = Number(raw)
+  if (!Number.isFinite(n) || n < 0 || n > 100) {
+    return null
+  }
+  return n
+}
+
 export async function main(argv: string[]): Promise<number> {
   try {
     const args = minimist(argv, {
@@ -15,6 +36,14 @@ export async function main(argv: string[]): Promise<number> {
 
     if (command !== 'scan') {
       console.error('Usage: asset-sweep scan <directory> [options]')
+      return 2
+    }
+
+    const threshold = parseThreshold(args.threshold)
+    if (threshold === null) {
+      console.error(
+        `asset-sweep: --threshold must be a number between 0 and 100 ` +
+        `(got: ${JSON.stringify(args.threshold)})`)
       return 2
     }
 
@@ -49,7 +78,6 @@ export async function main(argv: string[]): Promise<number> {
       console.log(output)
     }
 
-    const threshold = Number(args.threshold ?? 0)
     const total = result.summary.totalCssSelectors
     // A real percentage of unused CSS selectors out of all selectors
     // defined, not unused selectors over discovered-file count (which mixes

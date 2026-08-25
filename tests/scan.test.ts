@@ -147,3 +147,59 @@ test('a failed .css file alone does not downgrade findings, since it only loses 
     await chmod(cssPath, 0o644)
   }
 })
+
+describe('--threshold validation', () => {
+  // A 100%-unused project makes the gate observable: any threshold below
+  // 100 must trip it (exit 1), so if a bad --threshold value slipped past
+  // validation and got coerced to something that disables the check (e.g.
+  // NaN, where `ratio > NaN` is always false), this project would prove it
+  // by wrongly exiting 0.
+  async function allUnusedProject() {
+    return project({
+      'styles.css': '.ghost { color: red }',
+      'index.html': '<div></div>',
+    })
+  }
+
+  test('a non-numeric --threshold exits 2 rather than silently disabling the gate', async () => {
+    const dir = await allUnusedProject()
+    const spy = jest.spyOn(console, 'error').mockImplementation(() => {})
+    expect(await main(['scan', dir, '--threshold', 'abc'])).toBe(2)
+    spy.mockRestore()
+  })
+
+  test('a bare --threshold with no value exits 2 rather than being coerced to 1', async () => {
+    const dir = await allUnusedProject()
+    const spy = jest.spyOn(console, 'error').mockImplementation(() => {})
+    expect(await main(['scan', dir, '--threshold'])).toBe(2)
+    spy.mockRestore()
+  })
+
+  test('a negative --threshold exits 2', async () => {
+    const dir = await allUnusedProject()
+    const spy = jest.spyOn(console, 'error').mockImplementation(() => {})
+    expect(await main(['scan', dir, '--threshold', '-5'])).toBe(2)
+    spy.mockRestore()
+  })
+
+  test('a --threshold above 100 exits 2', async () => {
+    const dir = await allUnusedProject()
+    const spy = jest.spyOn(console, 'error').mockImplementation(() => {})
+    expect(await main(['scan', dir, '--threshold', '101'])).toBe(2)
+    spy.mockRestore()
+  })
+
+  test('--threshold 0 is accepted and fails a project with any unused selectors', async () => {
+    const dir = await allUnusedProject()
+    const spy = jest.spyOn(console, 'log').mockImplementation(() => {})
+    expect(await main(['scan', dir, '--threshold', '0'])).toBe(1)
+    spy.mockRestore()
+  })
+
+  test('--threshold 100 is accepted and never fails, since ratio can never exceed 100', async () => {
+    const dir = await allUnusedProject()
+    const spy = jest.spyOn(console, 'log').mockImplementation(() => {})
+    expect(await main(['scan', dir, '--threshold', '100'])).toBe(0)
+    spy.mockRestore()
+  })
+})
