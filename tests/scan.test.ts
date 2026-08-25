@@ -203,3 +203,73 @@ describe('--threshold validation', () => {
     spy.mockRestore()
   })
 })
+
+describe('a usage-source read failure must never let the exit code report success', () => {
+  // .only-in-html is genuinely used, but the only file that proves that is
+  // made unreadable, so the scan cannot know it's safe. Its finding is
+  // downgraded to 'low' by C2 — these tests check that low finding, and
+  // usageSourceErrors, still force a non-zero exit even when threshold or
+  // confidence filtering would otherwise have let the run pass.
+  async function projectWithUnreadableHtml() {
+    const dir = await project({
+      'styles.css': '.only-in-html { color: red }',
+      'index.html': '<div class="only-in-html"></div>',
+    })
+    const htmlPath = join(dir, 'index.html')
+    await chmod(htmlPath, 0o000)
+    return { dir, htmlPath }
+  }
+
+  test('an unreadable usage-source file exits 1 under --min-confidence medium, not 0 (regression)', async () => {
+    const { dir, htmlPath } = await projectWithUnreadableHtml()
+    const spy = jest.spyOn(console, 'log').mockImplementation(() => {})
+    try {
+      const code = await main(['scan', dir, '--min-confidence', 'medium'])
+      expect(code).toBe(1)
+    } finally {
+      spy.mockRestore()
+      await chmod(htmlPath, 0o644)
+    }
+  })
+
+  test('an unreadable usage-source file exits 1 under --threshold 100', async () => {
+    const { dir, htmlPath } = await projectWithUnreadableHtml()
+    const spy = jest.spyOn(console, 'log').mockImplementation(() => {})
+    try {
+      const code = await main(['scan', dir, '--threshold', '100'])
+      expect(code).toBe(1)
+    } finally {
+      spy.mockRestore()
+      await chmod(htmlPath, 0o644)
+    }
+  })
+
+  test('an unreadable usage-source file exits 1 under --min-confidence high (zero surviving findings)', async () => {
+    const { dir, htmlPath } = await projectWithUnreadableHtml()
+    const spy = jest.spyOn(console, 'log').mockImplementation(() => {})
+    try {
+      const code = await main(['scan', dir, '--min-confidence', 'high'])
+      expect(code).toBe(1)
+    } finally {
+      spy.mockRestore()
+      await chmod(htmlPath, 0o644)
+    }
+  })
+
+  test('a scan with no usage-source errors is unaffected: 0 under threshold, 1 over, 2 on fatal error', async () => {
+    const dir = await project({
+      'styles.css': '.ghost { color: red }',
+      'index.html': '<div></div>',
+    })
+    const logSpy = jest.spyOn(console, 'log').mockImplementation(() => {})
+    const errSpy = jest.spyOn(console, 'error').mockImplementation(() => {})
+    try {
+      expect(await main(['scan', dir, '--threshold', '100'])).toBe(0)
+      expect(await main(['scan', dir, '--threshold', '0'])).toBe(1)
+      expect(await main(['scan', dir, '--threshold', 'abc'])).toBe(2)
+    } finally {
+      logSpy.mockRestore()
+      errSpy.mockRestore()
+    }
+  })
+})

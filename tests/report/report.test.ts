@@ -119,6 +119,17 @@ test('a scan with unreadable usage-source files prints a visible warning above t
 test('a clean scan with no usage-source errors prints no warning line', () => {
   const out = renderText(result)
   expect(out).not.toMatch(/WARNING/)
+  expect(out).not.toMatch(/exit non-zero/i)
+})
+
+test('a scan with unreadable usage-source files spells out that it will exit non-zero', () => {
+  const withUsageErrors: ScanResult = {
+    summary: { ...result.summary, usageSourceErrors: 1 },
+    findings: result.findings,
+    errors: [],
+  }
+  const out = renderText(withUsageErrors)
+  expect(out).toMatch(/exit non-zero \(1\)/i)
 })
 
 test('the summary prints the unused-selector ratio as a fraction and a percentage', () => {

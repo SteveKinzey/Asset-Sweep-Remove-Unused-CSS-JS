@@ -85,6 +85,20 @@ export async function main(argv: string[]): Promise<number> {
     // project dilute the ratio). Zero selectors defined means zero unused
     // percent, not a NaN from a 0/0 division.
     const ratio = total > 0 ? (result.summary.unusedCss / total) * 100 : 0
+
+    // A usage-source failure (see analyze/confidence.ts) makes the whole
+    // scan incomplete: the surviving findings are honestly downgraded to
+    // 'low', but --min-confidence can filter those out and --threshold can
+    // still pass, letting a scan that couldn't read its own inputs exit 0.
+    // CI reads exit codes, not the WARNING line in stdout, so this has to
+    // be enforced here regardless of what threshold/confidence decided.
+    // Exit 1 (not 2): the scan did produce results, they're just
+    // incomplete/untrustworthy — 2 is reserved for fatal failures where
+    // nothing usable was produced at all.
+    if (result.summary.usageSourceErrors > 0) {
+      return 1
+    }
+
     return ratio > threshold ? 1 : 0
   } catch (err) {
     console.error(`asset-sweep: ${(err as Error).message}`)

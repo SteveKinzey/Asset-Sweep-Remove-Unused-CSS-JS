@@ -39,6 +39,13 @@ export function renderText(result: ScanResult): string {
       '(e.g. .html) could not be read or parsed. This scan is incomplete: ' +
       'findings below may be false positives, so their confidence has ' +
       'been downgraded to low.')
+    // The exit code enforces this regardless of --threshold/--min-confidence
+    // (see cli.ts), but exit codes are invisible in a terminal — spell out
+    // the consequence here so a user reading the report understands why
+    // their build failed even if every finding above got filtered out.
+    lines.push(
+      'This run will exit non-zero (1) because of the incomplete scan ' +
+      'above, regardless of --threshold or --min-confidence.')
     lines.push('')
   }
 

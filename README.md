@@ -372,9 +372,21 @@ This is expected, not a bug. Phase 1 has no JavaScript parser, so it cannot prov
 
 If a `.html` file (or any future file type that contributes usage — a "usage source") fails to read or parse, the scanner has lost real information about what's actually used, not just definitions. Rather than silently reporting the surviving findings at their usual `medium` confidence — which would assert "not found in HTML" about HTML the tool never actually read — every `css-selector` finding in that scan is downgraded to `low`, and its `reason` says plainly how many usage-source files could not be analyzed. The text report also prints a `WARNING` line above the findings, and `summary.usageSourceErrors` carries the count in JSON so CI tooling can key off it directly. A `.css` file failing to read does **not** trigger this: losing a definition can only make the tool under-report, never manufacture a false positive, so only usage-source failures downgrade confidence.
 
+This downgrade alone isn't enough to protect CI, since `--min-confidence` can filter `low` findings out of the report entirely and `--threshold` only looks at what's left — see [Exit codes](#exit-codes) below for the hard rule that keeps a scan like this from exiting 0.
+
 ---
 
 ## 🤖 CI/CD Integration
+
+### Exit codes
+
+| Code | Meaning |
+|---|---|
+| `0` | Scan completed, and unused CSS did not exceed `--threshold` |
+| `1` | Scan completed, but unused CSS exceeded `--threshold` — **or** one or more usage-source files (currently `.html`) could not be read or parsed |
+| `2` | Fatal: bad arguments/config, or no files matched — nothing usable was produced |
+
+**A scan that could not read one or more usage-source files always exits `1`, never `0`**, regardless of `--threshold` or `--min-confidence`. Those files are what prove a class or id is used; without them the scan is incomplete, and its findings are downgraded to `low` confidence for exactly that reason (see [Why a finding sometimes says `low`](#-understanding-the-report) above). `--min-confidence medium` or `--threshold 100` can filter or outrank every downgraded finding in the *report*, but they cannot turn an incomplete scan into a passing exit code — CI reads the exit code, not the `WARNING` line in stdout, so the rule is enforced there directly. Check `summary.usageSourceErrors` in JSON output (or the `WARNING` line in text output) to see how many files failed and why the run isn't `0`.
 
 ### GitHub Actions
 
