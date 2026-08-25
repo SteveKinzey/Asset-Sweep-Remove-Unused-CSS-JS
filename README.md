@@ -11,11 +11,27 @@
 
 ## 🚧 Project Status
 
-> **Asset Sweep is in active early development. The CLI is not yet published to npm and the commands below describe the target design, not shipped behavior.**
->
-> This repository currently contains the project specification, configuration, and contributor tooling. If you are looking for a tool to use in production **today**, see [Alternatives](#-alternatives-and-how-asset-sweep-differs).
->
-> ⭐ **Star this repo** to be notified when v0.1.0 ships, or [open an issue](https://github.com/SteveKinzey/Asset-Sweep-Remove-Unused-CSS-JS/issues) to help shape it.
+> **Asset Sweep is in active early development and is not yet published to npm.** Within that limit, `asset-sweep scan` genuinely works today — the commands documented below as "works now" run against real code, not a planned interface.
+
+**Works today**, via `asset-sweep scan`:
+
+- Detects unused CSS selectors (classes and IDs) by cross-referencing every selector defined in your CSS against every class/id actually used in your HTML
+- Loads and validates `.asset-sweeprc.json` / the `assetSweep` key in `package.json`
+- Safelisting via `ignoreSelectors` and `ignoreClasses` (glob patterns, e.g. `js-*`)
+- Confidence scoring per finding, filterable with `--min-confidence`
+- Text and JSON reports (`--report text|json`)
+- CI-friendly exit codes driven by `--threshold`
+
+**Not yet implemented** — do not rely on these:
+
+- JavaScript analysis (dead exports, unreachable functions) — every scan reports `unusedJs: 0`
+- `.vue` / `.svelte` file support
+- `--report csv`
+- The entire `asset-sweep clean` command (dry-run, backup, safe-mode, actual removal)
+
+Because JavaScript is not analyzed yet, Asset Sweep cannot prove a selector is unreferenced by runtime-constructed class names — see [the confidence cap note](#-understanding-the-report) below. If you are looking for a tool to use in production **today** for the pieces not listed above, see [Alternatives](#-alternatives-and-how-asset-sweep-differs).
+
+⭐ **Star this repo** to be notified as JavaScript analysis and `clean` land, or [open an issue](https://github.com/SteveKinzey/Asset-Sweep-Remove-Unused-CSS-JS/issues) to help shape them.
 
 ---
 
@@ -61,13 +77,13 @@ Removing unused CSS and JavaScript is one of the highest-leverage, lowest-risk w
 
 ## ✨ What Asset Sweep Does
 
-Asset Sweep scans your HTML, CSS, and JavaScript, cross-references what is **defined** against what is **actually used**, and reports (or removes) the difference.
+Asset Sweep scans your HTML and CSS, cross-references what is **defined** against what is **actually used**, and reports the difference. It aims to eventually cover JavaScript and removal too — see [Project Status](#-project-status) for what's real today versus planned.
 
-- **🔍 Finds unused CSS selectors** — classes, IDs, and complex selectors with no matching usage anywhere in your markup or components
-- **🧹 Finds dead JavaScript** — unreferenced exports, unreachable functions, and orphaned modules
-- **🎯 Handles CSS and JS together** — one tool, one pass, one report, instead of stitching together separate tools
-- **🛡️ Report-first and safe by default** — nothing is deleted until you explicitly ask, with `--dry-run` and `--backup` available
-- **🧩 Framework-agnostic** — works with plain HTML, React, Next.js, Vue, Nuxt, Svelte, Angular, and WordPress themes
+- **🔍 Finds unused CSS selectors (works today)** — classes and IDs with no matching usage anywhere in your HTML
+- **🧹 Finds dead JavaScript (planned)** — unreferenced exports, unreachable functions, and orphaned modules
+- **🎯 Handles CSS and JS together (planned)** — one tool, one pass, one report, instead of stitching together separate tools
+- **🛡️ Report-only today** — `scan` never modifies files; the `clean` command that would remove code is not built yet
+- **🧩 Framework-agnostic markup/CSS scanning** — works with plain HTML and any framework's compiled CSS/HTML output
 - **🤖 Built for CI/CD** — JSON output, configurable thresholds, and meaningful exit codes
 - **⚙️ Configurable safelists** — preserve selectors your tooling injects at runtime
 
@@ -79,7 +95,7 @@ Asset Sweep is not the only way to remove unused code. Here's an honest comparis
 
 | Tool | Removes unused CSS | Removes unused JS | Framework-agnostic | Notes |
 |---|:---:|:---:|:---:|---|
-| **Asset Sweep** | ✅ | ✅ | ✅ | Both in one pass. Pre-alpha — not production-ready yet. |
+| **Asset Sweep** | ⚠️ | ❌ | ✅ | *Finds* unused CSS today (report-only, no removal yet); JS analysis and removal are both planned. Pre-alpha — not production-ready. |
 | [**PurgeCSS**](https://purgecss.com/) | ✅ | ❌ | ✅ | The mature, production-proven choice for CSS. **Use this today.** |
 | [**UnCSS**](https://github.com/uncss/uncss) | ✅ | ❌ | ⚠️ | Renders pages in a headless browser. Older, less actively maintained. |
 | [**Knip**](https://knip.dev/) | ❌ | ✅ | ⚠️ | Excellent for unused files, exports, and dependencies in JS/TS projects. |
@@ -94,7 +110,7 @@ Asset Sweep is not the only way to remove unused code. Here's an honest comparis
 
 ## 📦 Installation
 
-> ⚠️ **Not yet published to npm.** These commands are the intended interface and will work once v0.1.0 ships. Star the repo to get notified.
+> ⚠️ **Not yet published to npm.** `scan` works from a source checkout today (see below); the `npm`/`Yarn` global-install commands are the intended interface once a release ships. Star the repo to get notified.
 
 ### npm (planned)
 
@@ -108,49 +124,44 @@ npm install -g asset-sweep
 yarn global add asset-sweep
 ```
 
-### From source
-
-Cloning gets you the toolchain, not a working CLI — there is no `src/` yet,
-so `npm run build` and `npm link` have nothing to compile or link:
+### From source (works today)
 
 ```bash
 git clone https://github.com/SteveKinzey/Asset-Sweep-Remove-Unused-CSS-JS.git
 cd Asset-Sweep-Remove-Unused-CSS-JS
-npm ci          # installs the toolchain; 0 known vulnerabilities
-```
-
-Once the scanner lands, the remaining steps become:
-
-```bash
+npm ci          # installs dependencies
 npm run build   # compiles src/ -> dist/
 npm link        # puts `asset-sweep` on your PATH
 ```
 
+`asset-sweep scan <directory>` now runs for real against CSS/HTML — see [Project Status](#-project-status) for exactly what is and isn't implemented.
+
 **Requirements:** Node.js >= 18.0.0, npm >= 9.0.0
 
 > The package is marked `private` in `package.json` so it cannot be published
-> by accident while `dist/` and `bin/` do not exist. Remove that field when
-> there is a real build to ship.
+> by accident. That stays in place until JavaScript analysis and `clean`
+> land too — Phase 1 (CSS-only `scan`) working is not the bar for publishing
+> the whole tool.
 
 ---
 
 ## 🚀 Quick Start
 
 ```bash
-# 1. See what's unused — read-only, changes nothing
+# 1. See what's unused — read-only, changes nothing (works today)
 asset-sweep scan ./src
 
-# 2. Save a machine-readable report
+# 2. Save a machine-readable report (works today)
 asset-sweep scan ./src --report json --output unused-assets.json
 
-# 3. Preview exactly what removal would do
+# 3. Preview exactly what removal would do (not yet implemented)
 asset-sweep clean ./src --dry-run
 
-# 4. Remove it, keeping backups
+# 4. Remove it, keeping backups (not yet implemented)
 asset-sweep clean ./src --backup --confirm
 ```
 
-**Recommended first run:** always start with `scan`, then `clean --dry-run`. Never run `clean --confirm` against a directory that isn't committed to version control.
+**Recommended first run:** start with `scan`. `clean` is not implemented yet — see [Project Status](#-project-status) — so for now, act on the report by hand and, once `clean` ships, never run `clean --confirm` against a directory that isn't committed to version control.
 
 ---
 
@@ -158,7 +169,7 @@ asset-sweep clean ./src --backup --confirm
 
 ### `asset-sweep scan`
 
-Analyze a project and report unused CSS and JavaScript. **Read-only — never modifies files.**
+Analyze a project and report unused CSS selectors. **Read-only — never modifies files.** (JavaScript is discovered but not yet analyzed — see [Project Status](#-project-status).)
 
 ```bash
 asset-sweep scan <directory> [options]
@@ -166,10 +177,11 @@ asset-sweep scan <directory> [options]
 
 | Option | Description | Default |
 |---|---|---|
-| `--include <patterns>` | Glob patterns to analyze | `**/*.{html,js,jsx,ts,tsx,vue,svelte}` |
-| `--exclude <patterns>` | Glob patterns to skip | `node_modules/**,dist/**` |
-| `--report <format>` | Output format: `text`, `json`, `csv` | `text` |
-| `--threshold <percent>` | Only fail if unused code exceeds this percentage (0–100) | `0` |
+| `--include <patterns>` | Glob patterns to analyze | `**/*.{html,js,jsx,ts,tsx,vue,svelte,css}` |
+| `--exclude <patterns>` | Glob patterns to skip | `**/node_modules/**,**/dist/**` |
+| `--report <format>` | Output format: `text`, `json` (`csv` is not implemented yet) | `text` |
+| `--threshold <percent>` | Fail (exit 1) only when unused CSS selectors, as a percentage of all CSS selectors defined (`unused / total × 100`), strictly *exceeds* this number | `0` |
+| `--min-confidence <level>` | Drop findings below this confidence: `low`, `medium`, or `high`. Invalid values exit 2. | unset (no filtering) |
 | `--output <file>` | Write the report to a file instead of stdout | stdout |
 
 ```bash
@@ -181,6 +193,8 @@ asset-sweep scan ./src \
 ```
 
 ### `asset-sweep clean`
+
+> ⚠️ **Not implemented yet.** The `clean` command described below does not exist in the CLI today — running it will fail with "Usage: asset-sweep scan \<directory\> [options]". This section documents the intended interface for when it lands; see [Project Status](#-project-status).
 
 Remove unused CSS and JavaScript. **Modifies files — read the options carefully.**
 
@@ -224,12 +238,14 @@ Create `.asset-sweeprc.json` in your project root, or add an `assetSweep` key to
 
 | Option | Type | Default | Description |
 |---|---|---|---|
-| `include` | `string[]` | `**/*.{html,js,jsx,ts,tsx,vue,svelte}` | Files to analyze |
-| `exclude` | `string[]` | `node_modules/**,dist/**` | Files to skip |
+| `include` | `string[]` | `**/*.{html,js,jsx,ts,tsx,vue,svelte,css}` | Files to analyze |
+| `exclude` | `string[]` | `**/node_modules/**,**/dist/**` | Files to skip |
 | `ignoreSelectors` | `string[]` | `[]` | CSS selectors to always preserve |
 | `ignoreClasses` | `string[]` | `[]` | Class name patterns (glob) to always preserve |
-| `preserveComments` | `boolean` | `false` | Keep comments in modified CSS/JS |
-| `safeMode` | `boolean` | `false` | Conservative removal — keep uncertain matches |
+| `preserveComments` | `boolean` | `false` | Reserved for `clean` (keep comments in modified CSS/JS) — accepted and validated today, but has no effect since `clean` doesn't exist yet |
+| `safeMode` | `boolean` | `false` | Reserved for `clean` (conservative removal) — accepted and validated today, but has no effect since `clean` doesn't exist yet |
+
+`exclude` needs the `**/` prefix (not `node_modules/**`) so it excludes nested vendor directories too, not just one directly under the scanned directory — the default was fixed for exactly this in a monorepo.
 
 **Safelisting is the most important setting.** Any class applied at runtime — by a framework, an analytics script, or string concatenation — must be listed in `ignoreClasses` or `ignoreSelectors`, or it will be reported as unused.
 
@@ -290,26 +306,23 @@ WordPress generates body and post classes server-side that never appear in your 
 
 ## 📊 Understanding the Report
 
+The examples below are the actual output shape today (Phase 1: CSS only). `unusedJs` is always `0` and no JavaScript findings appear yet. File paths are printed **relative to the directory you ran `asset-sweep` from**, the same convention ESLint and `tsc` use, so they're clickable in a terminal or editor without adjustment.
+
 ### Text report
 
 ```
 Asset Sweep Report
 ==================
 
-📊 Summary
-  Files analyzed: 42
-  Unused CSS rules: 287
-  Unused JS exports: 15
+Summary
+  Files analyzed:    42
+  Unused CSS rules:  287
   Estimated savings: 145.2 KB
 
-🎨 CSS
-  Unused selectors: 287
-    - .old-header       (styles.css:12)
-    - #deprecatedId     (main.css:456)
-
-⚙️ JavaScript
-  Unused exports: 15
-    - deprecatedFunction (utils.js:89)
+MEDIUM confidence (287)
+  .old-header  src/styles.css:12  2356 bytes
+  #deprecatedId  src/main.css:456  512 bytes
+  why: No matching class or id found in HTML. JavaScript was not analyzed, so a class applied at runtime would not be detected.
 ```
 
 ### JSON report
@@ -319,21 +332,31 @@ Asset Sweep Report
   "summary": {
     "filesAnalyzed": 42,
     "unusedCss": 287,
-    "unusedJs": 15,
-    "estimatedSavings": "145.2 KB"
+    "unusedJs": 0,
+    "estimatedSavings": "145.2 KB",
+    "errors": 0,
+    "semanticMode": false,
+    "totalCssSelectors": 640
   },
-  "css": {
-    "unused": [
-      { "selector": ".old-header", "file": "styles.css", "line": 12, "size": "2.3 KB" }
-    ]
-  },
-  "javascript": {
-    "unused": [
-      { "name": "deprecatedFunction", "file": "utils.js", "line": 89, "type": "export" }
-    ]
-  }
+  "findings": [
+    {
+      "type": "css-selector",
+      "name": "old-header",
+      "file": "src/styles.css",
+      "line": 12,
+      "column": 1,
+      "bytes": 2356,
+      "confidence": "medium",
+      "reason": "No matching class or id found in HTML. JavaScript was not analyzed, so a class applied at runtime would not be detected."
+    }
+  ],
+  "errors": []
 }
 ```
+
+### Why every finding says `medium`, never `high`
+
+This is expected, not a bug. Phase 1 has no JavaScript parser, so it cannot prove a selector is never constructed dynamically at runtime (e.g. `` el.className = 'old-' + variant ``). Proving that absence is what `high` confidence requires. Until JavaScript analysis ships, every CSS finding is capped at `medium` — treat a `medium` finding as "no static usage found," not "provably safe to delete," and safelist anything your code assembles at runtime via `ignoreClasses` / `ignoreSelectors`.
 
 ---
 
@@ -342,19 +365,19 @@ Asset Sweep Report
 ### GitHub Actions
 
 ```yaml
-- name: Check for unused CSS and JavaScript
+- name: Check for unused CSS
   run: |
     asset-sweep scan ./src --report json --output unused.json --threshold 5
 ```
 
-With `--threshold 5`, the command exits non-zero only when more than 5% of your assets are unused — so a pull request fails on regressions without blocking on pre-existing debt.
+With `--threshold 5`, the command exits non-zero only when more than 5% of your CSS selectors are unused — so a pull request fails on regressions without blocking on pre-existing debt.
 
 ### Pre-commit hook
 
 ```bash
 #!/bin/bash
 # .husky/pre-commit
-asset-sweep scan ./src --dry-run --threshold 5
+asset-sweep scan ./src --threshold 5
 ```
 
 ### npm scripts
