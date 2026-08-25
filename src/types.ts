@@ -32,6 +32,7 @@ export interface ScanResult {
     estimatedSavings: string
     errors: number
     semanticMode: boolean
+    totalCssSelectors: number
   }
   findings: Finding[]
   errors: ScanError[]

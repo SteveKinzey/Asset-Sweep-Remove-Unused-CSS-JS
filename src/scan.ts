@@ -1,5 +1,5 @@
 import { readFile } from 'node:fs/promises'
-import { extname } from 'node:path'
+import { extname, relative } from 'node:path'
 import type { ScanResult, SelectorDef, UsageToken, ScanError } from './types.js'
 import type { AssetSweepConfig } from './config/types.js'
 import { loadConfig } from './config/load.js'
@@ -27,19 +27,26 @@ export async function scan(
   const defs: SelectorDef[] = []
   const tokens: UsageToken[] = []
   const errors: ScanError[] = []
+  let filesAnalyzed = 0
 
   for (const file of files) {
+    // Labels are relative to the caller's cwd (not the scan root), so a
+    // printed "src/styles.css:2" resolves from where the user is standing
+    // and is clickable in a terminal/editor, matching eslint/tsc/jest.
+    const label = relative(process.cwd(), file)
     try {
       const source = await readFile(file, 'utf8')
       const ext = extname(file)
       if (ext === '.css') {
-        defs.push(...parseCss(source, file))
+        defs.push(...parseCss(source, label))
+        filesAnalyzed++
       } else if (ext === '.html') {
-        tokens.push(...parseHtml(source, file))
+        tokens.push(...parseHtml(source, label))
+        filesAnalyzed++
       }
       // Other extensions are discovered but not yet parsed; Phase 2 adds them.
     } catch (err) {
-      errors.push({ file, message: (err as Error).message })
+      errors.push({ file: label, message: (err as Error).message })
     }
   }
 
@@ -48,12 +55,13 @@ export async function scan(
 
   return {
     summary: {
-      filesAnalyzed: files.length - errors.length,
+      filesAnalyzed,
       unusedCss: findings.length,
       unusedJs: 0,
       estimatedSavings: formatBytes(savings),
       errors: errors.length,
       semanticMode: false,
+      totalCssSelectors: defs.length,
     },
     findings,
     errors,
