@@ -4,6 +4,7 @@ import minimist from 'minimist'
 import { scan } from './scan.js'
 import { renderText } from './report/text.js'
 import { renderJson } from './report/json.js'
+import { unusedRatio } from './analyze/ratio.js'
 
 // A future `clean` command deletes what this tool reports, and --threshold
 // gates CI on that report, so a threshold that silently fails to parse
@@ -78,13 +79,12 @@ export async function main(argv: string[]): Promise<number> {
       console.log(output)
     }
 
-    const total = result.summary.totalCssSelectors
-    // A real percentage of unused CSS selectors out of all selectors
-    // defined, not unused selectors over discovered-file count (which mixes
-    // two different units and lets unrelated JS/etc. files added to the
-    // project dilute the ratio). Zero selectors defined means zero unused
-    // percent, not a NaN from a 0/0 division.
-    const ratio = total > 0 ? (result.summary.unusedCss / total) * 100 : 0
+    // unusedRatio is the single shared formula (see analyze/ratio.ts) —
+    // not unused selectors over discovered-file count (which mixes two
+    // different units and lets unrelated JS/etc. files added to the
+    // project dilute the ratio).
+    const ratio = unusedRatio(
+      result.summary.unusedCss, result.summary.totalCssSelectors)
 
     // A usage-source failure (see analyze/confidence.ts) makes the whole
     // scan incomplete: the surviving findings are honestly downgraded to

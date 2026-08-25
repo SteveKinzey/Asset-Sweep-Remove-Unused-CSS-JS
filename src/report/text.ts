@@ -1,4 +1,5 @@
 import type { ScanResult, Confidence, Finding } from '../types.js'
+import { unusedRatio } from '../analyze/ratio.js'
 
 const ORDER: Confidence[] = ['high', 'medium', 'low']
 
@@ -13,13 +14,14 @@ export function renderText(result: ScanResult): string {
   const { summary, findings, errors } = result
   const lines: string[] = ['Asset Sweep Report', '==================', '']
 
-  // --threshold gates CI on unused-selectors ÷ total-selectors — the exact
-  // bug this line guards against was computing that ratio over the wrong
-  // denominator (files, not selectors) with nothing in the report to show
-  // it. Printing both the fraction and the percentage here means a future
-  // unit mismatch is visible on sight instead of latent in the exit code.
+  // unusedRatio is the same shared formula --threshold's gate uses (see
+  // analyze/ratio.ts) — the original threshold bug computed this ratio
+  // over the wrong denominator (files, not selectors) with nothing in the
+  // report to show it. Printing both the fraction and the percentage here
+  // means a future unit mismatch is visible on sight instead of latent in
+  // the exit code.
   const total = summary.totalCssSelectors
-  const percent = total > 0 ? (summary.unusedCss / total) * 100 : 0
+  const percent = unusedRatio(summary.unusedCss, total)
 
   lines.push('Summary')
   lines.push(`  Files analyzed:    ${summary.filesAnalyzed}`)
