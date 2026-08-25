@@ -36,3 +36,27 @@ test('reports the real line number of a class on a nested element in multi-line 
   expect(outer?.line).toBe(1)
   expect(deep?.line).toBe(3)
 })
+
+test('finds a class used only inside a <template> element', () => {
+  const tokens = parseHtml('<template><div class="tmpl"></div></template>', 'i.html')
+  expect(tokens.map(t => t.value)).toEqual(['tmpl'])
+})
+
+test('finds a class inside a <template> nested inside another <template>', () => {
+  const source =
+    '<template><div class="outer-tmpl">' +
+    '<template><span class="inner-tmpl"></span></template>' +
+    '</div></template>'
+  const tokens = parseHtml(source, 'i.html')
+  expect(tokens.map(t => t.value).sort()).toEqual(['inner-tmpl', 'outer-tmpl'])
+})
+
+test('ordinary markup outside any <template> still works alongside template contents', () => {
+  const source =
+    '<body class="page">' +
+    '<template><div class="tmpl-only"></div></template>' +
+    '<p class="regular"></p>' +
+    '</body>'
+  const tokens = parseHtml(source, 'i.html')
+  expect(tokens.map(t => t.value).sort()).toEqual(['page', 'regular', 'tmpl-only'])
+})
