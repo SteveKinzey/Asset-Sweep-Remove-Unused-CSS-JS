@@ -16,7 +16,7 @@
 **Works today**, via `asset-sweep scan`:
 
 - Detects unused CSS selectors (classes and IDs) by cross-referencing every selector defined in your CSS against every class/id actually used in your HTML
-- Scans CSS defined in `.css` files and in inline `<style>` blocks inside `.html` files; inline `<script>` contents are not analyzed (JavaScript analysis is not implemented — see below)
+- Scans CSS defined in `.css` files and in inline `<style>` blocks inside `.html`/`.htm`/`.xhtml` files; inline `<script>` contents are not analyzed (JavaScript analysis is not implemented — see below)
 - Loads and validates `.asset-sweeprc.json` / the `assetSweep` key in `package.json`
 - Safelisting via `ignoreSelectors` and `ignoreClasses` (glob patterns, e.g. `js-*`)
 - Confidence scoring per finding, filterable with `--min-confidence`
@@ -179,7 +179,7 @@ asset-sweep scan <directory> [options]
 
 | Option | Description | Default |
 |---|---|---|
-| `--include <patterns>` | Glob patterns to analyze | `**/*.{html,js,jsx,ts,tsx,vue,svelte,css}` |
+| `--include <patterns>` | Glob patterns to analyze | `**/*.{html,htm,xhtml,js,jsx,ts,tsx,vue,svelte,css}` |
 | `--exclude <patterns>` | Glob patterns to skip | `**/node_modules/**,**/dist/**` |
 | `--report <format>` | Output format: `text`, `json` (`csv` is not implemented yet) | `text` |
 | `--threshold <percent>` | Fail (exit 1) only when unused CSS selectors, as a percentage of all CSS selectors defined (`unused / total × 100`), strictly *exceeds* this number | `0` |
@@ -240,7 +240,7 @@ Create `.asset-sweeprc.json` in your project root, or add an `assetSweep` key to
 
 | Option | Type | Default | Description |
 |---|---|---|---|
-| `include` | `string[]` | `**/*.{html,js,jsx,ts,tsx,vue,svelte,css}` | Files to analyze |
+| `include` | `string[]` | `**/*.{html,htm,xhtml,js,jsx,ts,tsx,vue,svelte,css}` | Files to analyze |
 | `exclude` | `string[]` | `**/node_modules/**,**/dist/**` | Files to skip |
 | `ignoreSelectors` | `string[]` | `[]` | CSS selector patterns to always preserve. Glob (`*`), anchored — the pattern must match the entire raw selector text of the rule, not a fragment of it |
 | `ignoreClasses` | `string[]` | `[]` | Class name patterns (glob) to always preserve |
@@ -255,7 +255,7 @@ Create `.asset-sweeprc.json` in your project root, or add an `assetSweep` key to
 
 ## 🧩 Framework Guides
 
-> ⚠️ **Reality check before you copy any command below.** Today, usage detection only parses `.css` (for definitions) and `.html` (for usage). `--include` controls which files are *discovered*, not which are *analyzed* — a `.jsx`, `.tsx`, `.vue`, or `.svelte` file matched by `--include` is discovered (so it doesn't break the scan) but is **not** counted in `filesAnalyzed` and its markup is never read for class/id usage — `filesAnalyzed` only counts `.css`/`.html` files actually parsed. So selectors used only inside component templates can be misreported as unused. Full JSX/Vue/Svelte template parsing is planned (see [Project Status](#-project-status)) but not built yet. Point `scan` at your **rendered/compiled HTML output** for accurate results today, or safelist generously in the meantime.
+> ⚠️ **Reality check before you copy any command below.** Today, usage detection only parses `.css` (for definitions) and `.html`/`.htm`/`.xhtml` (for usage). `--include` controls which files are *discovered*, not which are *analyzed* — a `.jsx`, `.tsx`, `.vue`, or `.svelte` file matched by `--include` is discovered (so it doesn't break the scan) but is **not** counted in `filesAnalyzed` and its markup is never read for class/id usage — `filesAnalyzed` only counts `.css`/`.html`/`.htm`/`.xhtml` files actually parsed. So selectors used only inside component templates can be misreported as unused. Full JSX/Vue/Svelte template parsing is planned (see [Project Status](#-project-status)) but not built yet. Point `scan` at your **rendered/compiled HTML output** for accurate results today, or safelist generously in the meantime.
 
 ### React and Next.js
 
@@ -392,7 +392,7 @@ This downgrade alone isn't enough to protect CI, since `--min-confidence` can fi
 | Code | Meaning |
 |---|---|
 | `0` | Scan completed, and unused CSS did not exceed `--threshold` |
-| `1` | Scan completed, but unused CSS exceeded `--threshold` — **or** one or more usage-source files (currently `.html`) could not be read or parsed |
+| `1` | Scan completed, but unused CSS exceeded `--threshold` — **or** one or more usage-source files (currently `.html`/`.htm`/`.xhtml`) could not be read or parsed |
 | `2` | Fatal: bad arguments/config, or no files matched — nothing usable was produced |
 
 **A scan that could not read one or more usage-source files always exits `1`, never `0`**, regardless of `--threshold` or `--min-confidence`. Those files are what prove a class or id is used; without them the scan is incomplete, and its findings are downgraded to `low` confidence for exactly that reason (see [Why a finding sometimes says `low`](#-understanding-the-report) above). `--min-confidence medium` or `--threshold 100` can filter or outrank every downgraded finding in the *report*, but they cannot turn an incomplete scan into a passing exit code — CI reads the exit code, not the `WARNING` line in stdout, so the rule is enforced there directly. Check `summary.usageSourceErrors` in JSON output (or the `WARNING` line in text output) to see how many files failed and why the run isn't `0`.

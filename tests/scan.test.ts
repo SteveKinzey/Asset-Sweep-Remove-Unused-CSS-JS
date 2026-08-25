@@ -253,6 +253,47 @@ test('an unreadable usage-source (.html) file downgrades findings to low confide
   }
 })
 
+describe('.htm and .xhtml are treated exactly like .html, not silently unsupported', () => {
+  test("a .htm file's classes count as usage", async () => {
+    const dir = await project({
+      'styles.css': '.used-in-htm { color: red }',
+      'index.htm': '<div class="used-in-htm"></div>',
+    })
+    const result = await scan(dir)
+    expect(result.findings.map(f => f.name)).not.toContain('used-in-htm')
+    expect(result.summary.filesAnalyzed).toBe(2)
+  })
+
+  test("an .xhtml file's classes count as usage", async () => {
+    const dir = await project({
+      'styles.css': '.used-in-xhtml { color: red }',
+      'index.xhtml': '<div class="used-in-xhtml"></div>',
+    })
+    const result = await scan(dir)
+    expect(result.findings.map(f => f.name)).not.toContain('used-in-xhtml')
+    expect(result.summary.filesAnalyzed).toBe(2)
+  })
+
+  test('a failed .htm parse increments usageSourceErrors exactly as a failed .html does', async () => {
+    const dir = await project({
+      'styles.css': '.only-in-htm { color: red }',
+      'index.htm': '<div class="only-in-htm"></div>',
+    })
+    const htmPath = join(dir, 'index.htm')
+    await chmod(htmPath, 0o000) // simulate an unreadable .htm file
+
+    try {
+      const result = await scan(dir)
+      expect(result.summary.usageSourceErrors).toBe(1)
+      const finding = result.findings.find(f => f.name === 'only-in-htm')
+      expect(finding).toBeDefined()
+      expect(finding?.confidence).toBe('low')
+    } finally {
+      await chmod(htmPath, 0o644) // restore, so temp-dir cleanup can remove it
+    }
+  })
+})
+
 test('a failed .css file alone does not downgrade findings, since it only loses definitions', async () => {
   const dir = await project({
     'good.css': '.ghost { color: blue }',

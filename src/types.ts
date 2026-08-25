@@ -37,8 +37,9 @@ export interface ScanResult {
     errors: number
     semanticMode: boolean
     totalCssSelectors: number
-    // Count of usage-source files (currently .html) that failed to read or
-    // parse. Usage sources contribute UsageTokens, so losing one can hide
+    // Count of usage-source files (currently .html, .htm, .xhtml) that
+    // failed to read or parse. Usage sources contribute UsageTokens, so
+    // losing one can hide
     // real usage of a class/id and manufacture a false positive; a failed
     // .css file only loses definitions and cannot do that, so it is not
     // counted here. JSON consumers (e.g. CI) can gate on this directly

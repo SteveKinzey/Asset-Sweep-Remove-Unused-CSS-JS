@@ -12,6 +12,17 @@ function formatBytes(n: number): string {
   return n < 1024 ? `${n} B` : `${(n / 1024).toFixed(1)} KB`
 }
 
+// .htm and .xhtml are the same markup as .html — a project that happens to
+// use either extension deserves the exact same treatment, not silent
+// non-support. Anywhere `.html` is checked as a usage source (parsing for
+// UsageTokens, and counting a failed read/parse toward usageSourceErrors)
+// must treat these identically, or a project on .htm/.xhtml gets every
+// selector reported unused: none of its usage would ever be read.
+const HTML_LIKE_EXTS = new Set(['.html', '.htm', '.xhtml'])
+function isHtmlLike(ext: string): boolean {
+  return HTML_LIKE_EXTS.has(ext)
+}
+
 export async function scan(
   dir: string,
   overrides: Partial<AssetSweepConfig> = {},
@@ -28,9 +39,10 @@ export async function scan(
   const tokens: UsageToken[] = []
   const errors: ScanError[] = []
   let filesAnalyzed = 0
-  // Files that contribute UsageTokens (currently only .html). If one of
-  // these fails to read or parse, the surviving token set is incomplete
-  // and can no longer prove a class/id is unused — see analyze/confidence.ts.
+  // Files that contribute UsageTokens (currently .html, .htm, .xhtml). If
+  // one of these fails to read or parse, the surviving token set is
+  // incomplete and can no longer prove a class/id is unused — see
+  // analyze/confidence.ts.
   let usageSourceErrors = 0
 
   for (const file of files) {
@@ -47,7 +59,7 @@ export async function scan(
       if (ext === '.css') {
         defs.push(...parseCss(source, label))
         filesAnalyzed++
-      } else if (ext === '.html') {
+      } else if (isHtmlLike(ext)) {
         tokens.push(...parseHtml(source, label))
         // Inline <style> blocks contribute CSS definitions exactly as a
         // .css file would, attributed to this .html file so a finding
@@ -58,7 +70,7 @@ export async function scan(
       // Other extensions are discovered but not yet parsed; Phase 2 adds them.
     } catch (err) {
       errors.push({ file: label, message: (err as Error).message })
-      if (ext === '.html') {
+      if (isHtmlLike(ext)) {
         usageSourceErrors++
       }
     }
