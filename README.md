@@ -450,14 +450,14 @@ Static analysis is the core tradeoff: it is fast and requires no running browser
 
 ## 📏 Measured Performance
 
-These are the first real measurements ever taken of this tool — not estimates, not targets. Run on a MacBook (macOS, Darwin 25.5.0) with Node.js 18+, against the built CLI (`dist/`), on **synthetic generated fixtures**, not a real-world project. Nothing about parallelism, streaming, or memory efficiency is implemented — this is just how long `scan` currently takes on these two inputs.
+These are real measurements taken of this tool — not estimates, not targets. Run on a MacBook (macOS, Darwin 25.5.0) with Node.js 18+, against the built CLI (`dist/`), on **synthetic generated fixtures**, not a real-world project. Nothing about parallelism, streaming, or memory efficiency is implemented — this is just how long `scan` currently takes on these two inputs.
 
-Fixture shape: N `.css` files, each containing 50 selectors, and N `.html` files, each using 25 of those selectors — so exactly half of all defined selectors are unused.
+Fixture shape: N `.css` files, each containing 50 selectors, and N `.html` files, each using 25 of those selectors — so exactly half of all defined selectors are unused. `npm run benchmark [pairCount]` (`scripts/benchmark.js`) generates this exact fixture shape into a temp directory, runs `scan` against it once, prints the measurements below, and deletes the temp directory afterward — so these numbers are reproducible on any machine, not something to take on trust.
 
-| Fixture | Files | Selectors | Used | Time | Peak RSS |
-|---|---:|---:|---:|---|---|
-| A | 400 | 10,000 | 5,000 | 0.22–0.23 s (3 runs) | — |
-| B | 2,000 | 50,000 | 25,000 | 0.66 s | 129 MB |
+| Fixture | `pairCount` | Files | Selectors | Used | Time (3 runs) | RSS |
+|---|---:|---:|---:|---:|---|---|
+| A | 200 | 400 | 10,000 | 5,000 | 0.14–0.17 s | 88 MB |
+| B | 1,000 | 2,000 | 50,000 | 25,000 | 0.53–0.60 s | 128–132 MB |
 
 No claim is made here about how this scales to a real codebase, whether it stays this fast at larger sizes, or how memory behaves outside these two data points — that hasn't been measured yet.
 
