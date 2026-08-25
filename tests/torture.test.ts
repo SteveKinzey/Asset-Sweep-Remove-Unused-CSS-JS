@@ -35,6 +35,17 @@
 // output would pass every assertion here. It catches known defects from
 // regressing; it does not prove the scanner is correct on inputs it has
 // never seen.
+//
+// tests/generative.test.ts closes part of that gap: it generates hundreds
+// of randomized projects (seeded, reproducible) where the correct answer
+// is known by construction, because the test itself chose which names are
+// used and which are not. No hardcoded constant can satisfy hundreds of
+// distinct randomized cases the way it can satisfy this one fixture. That
+// raises the cost of a scan() that fakes correctness — it does not lower
+// this file's value (fixed known defects still deserve a fixed regression
+// test) and it still does not *prove* the scanner correct on every
+// possible input; it only makes "memorize the expected output" infeasible
+// as a way to pass.
 
 import { fileURLToPath } from 'node:url'
 import { dirname, join } from 'node:path'
