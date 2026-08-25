@@ -111,6 +111,54 @@ describe('inline <style> blocks in HTML are scanned for definitions', () => {
     // the threshold gate less strict than it claims to be.
     expect(result.summary.totalCssSelectors).toBe(2)
   })
+
+  // A malformed inline <style> block makes extractInlineCss() throw (it
+  // runs the extracted text through the same postcss parser that throws
+  // on malformed .css). By the time that throw happens, tokens.push(...)
+  // for this HTML file's own parseHtml() call has already completed in
+  // scan()'s loop — JS doesn't undo an earlier statement because a later
+  // one in the same try block threw — so the class/id usage this document
+  // provides survives even though its inline CSS could not be extracted.
+  // This locks that conservative, already-correct behavior in with tests:
+  // no test protected it before.
+  describe('a malformed inline <style> block does not silently lose usage information', () => {
+    function brokenStyleProject() {
+      return project({
+        'styles.css': '.survives { color: green }',
+        'index.html': [
+          '<html><head>',
+          '<style>.broken { color: red</style>', // unclosed rule: malformed CSS
+          '</head><body>',
+          '<div class="survives"></div>',
+          '</body></html>',
+        ].join('\n'),
+      })
+    }
+
+    test('increments usageSourceErrors, exactly like a failed .html read/parse', async () => {
+      const dir = await brokenStyleProject()
+      const result = await scan(dir)
+      expect(result.summary.usageSourceErrors).toBe(1)
+      expect(result.errors.some(e => e.file.match(/index\.html$/))).toBe(true)
+    })
+
+    test('does NOT cause a class used elsewhere in the same HTML file to be reported unused', async () => {
+      const dir = await brokenStyleProject()
+      const result = await scan(dir)
+      expect(result.findings.map(f => f.name)).not.toContain('survives')
+    })
+
+    test('the run exits non-zero', async () => {
+      const dir = await brokenStyleProject()
+      const spy = jest.spyOn(console, 'log').mockImplementation(() => {})
+      try {
+        const code = await main(['scan', dir])
+        expect(code).not.toBe(0)
+      } finally {
+        spy.mockRestore()
+      }
+    })
+  })
 })
 
 describe('estimatedSavings sums each rule once, not once per selector it defines', () => {
