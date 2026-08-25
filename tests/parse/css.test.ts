@@ -27,6 +27,17 @@ test('records line numbers and rule byte size', () => {
   expect(def.bytes).toBeGreaterThan(0)
 })
 
+// A rule containing a non-ASCII character has more UTF-8 bytes than
+// UTF-16 code units (`.length`), e.g. an emoji is 1 UTF-16 code unit's
+// worth of `.length` accounting quirks but 4 real bytes on the wire. Using
+// `.length` under-reports the bytes a browser actually downloads.
+test('bytes is a true UTF-8 byte count, not a UTF-16 code-unit count', () => {
+  const rule = '.emoji { content: "🎉" }'
+  const [def] = parseCss(rule, 'a.css')
+  expect(def.bytes).toBe(Buffer.byteLength(rule, 'utf8'))
+  expect(def.bytes).not.toBe(rule.length)
+})
+
 test('does not treat a :not() argument as a definition', () => {
   const defs = parseCss('.a:not(.b) { color: red }', 'a.css')
   expect(defs.map(d => d.name)).toEqual(['a'])

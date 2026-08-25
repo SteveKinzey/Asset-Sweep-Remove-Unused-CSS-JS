@@ -321,6 +321,8 @@ WordPress generates body and post classes server-side that never appear in your 
 
 The examples below are the actual output shape today (Phase 1: CSS only). `unusedJs` is always `0` and no JavaScript findings appear yet. File paths are printed **relative to the directory you ran `asset-sweep` from**, the same convention ESLint and `tsc` use, so they're clickable in a terminal or editor without adjustment.
 
+A finding's `bytes` is the size (true UTF-8 byte count, not a character count) of the **CSS rule its selector belongs to** — not a slice attributable to that one selector alone. A single rule can define more than one selector (`.parent .child { ... }` defines both `.parent` and `.child`), so more than one finding can report the same `bytes` value because they share the same rule. `summary.estimatedSavings`, however, counts each distinct rule **once**, no matter how many of its selectors are unused and reported — it is not the sum of every finding's `bytes`.
+
 ### Text report
 
 ```

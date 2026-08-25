@@ -113,6 +113,43 @@ describe('inline <style> blocks in HTML are scanned for definitions', () => {
   })
 })
 
+describe('estimatedSavings sums each rule once, not once per selector it defines', () => {
+  // `.parent .child { ... }` defines two selectors in one rule. Each
+  // unused selector still gets its own Finding (that's correct — the
+  // report should list both), but the rule itself only ships once, so
+  // deleting it only saves its bytes once.
+  test('a rule that defines two unused selectors counts its bytes once, not twice', async () => {
+    const ruleText = '.parent .child { color: red; padding: 1px }'
+    const dir = await project({
+      'styles.css': ruleText,
+      'index.html': '<div></div>',
+    })
+    const result = await scan(dir)
+
+    expect(result.findings.map(f => f.name).sort()).toEqual(['child', 'parent'])
+
+    const ruleBytes = Buffer.byteLength(ruleText, 'utf8')
+    for (const f of result.findings) {
+      expect(f.bytes).toBe(ruleBytes) // per-finding bytes: the containing rule's size
+    }
+    // Aggregate: ONE rule's worth of savings, not two.
+    expect(result.summary.estimatedSavings).toBe(`${ruleBytes} B`)
+  })
+
+  test('two genuinely separate unused rules still sum to both', async () => {
+    const oneText = '.one { color: red }'
+    const twoText = '.two { color: blue }'
+    const dir = await project({
+      'styles.css': `${oneText}\n${twoText}`,
+      'index.html': '<div></div>',
+    })
+    const result = await scan(dir)
+
+    const total = Buffer.byteLength(oneText, 'utf8') + Buffer.byteLength(twoText, 'utf8')
+    expect(result.summary.estimatedSavings).toBe(`${total} B`)
+  })
+})
+
 test('a malformed file is recorded as an error without aborting the scan', async () => {
   const dir = await project({
     'broken.css': '.a { color: red',      // unclosed block

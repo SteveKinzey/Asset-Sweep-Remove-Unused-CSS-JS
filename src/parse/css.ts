@@ -43,9 +43,20 @@ export function parseCss(source: string, file: string): SelectorDef[] {
   const root = postcss.parse(source, { from: file })
 
   root.walkRules(rule => {
+    // line/column are the RULE's start position, computed once here and
+    // reused for every class/id node found inside its selector below — not
+    // each node's own position. That makes (file, line, column) a stable
+    // identity for "which rule did this finding come from", which is
+    // exactly what a savings calculation needs to sum each rule's bytes
+    // once instead of once per class/id it happens to define (see scan.ts).
     const line = rule.source?.start?.line ?? 1
     const column = rule.source?.start?.column ?? 1
-    const bytes = rule.toString().length
+    // .length is a UTF-16 code-unit count, not a byte count: any rule
+    // containing a non-ASCII character (e.g. `content: '→'`) would report
+    // a smaller "savings" than the bytes actually shipped to the browser.
+    // Buffer.byteLength measures the true UTF-8 byte size, which is what
+    // "estimated savings" is supposed to mean.
+    const bytes = Buffer.byteLength(rule.toString(), 'utf8')
 
     selectorParser(sel => {
       sel.walkClasses(node => {

@@ -65,7 +65,24 @@ export async function scan(
   }
 
   const findings = analyzeCss(defs, tokens, config, usageSourceErrors)
-  const savings = findings.reduce((sum, f) => sum + f.bytes, 0)
+
+  // A single rule can define several classes/ids (`.parent .child { ... }`),
+  // and each gets its own Finding when unused — parseCss stamps every
+  // class/id it emits from one rule with that rule's own start (file, line,
+  // column), never the individual node's position (see parse/css.ts), so
+  // that triple is a stable identity for "which rule is this". Summing
+  // every finding's `bytes` would therefore double-count a rule once per
+  // selector it defines; summing each distinct rule identity once gives
+  // the true byte savings from deleting it.
+  const seenRules = new Set<string>()
+  let savings = 0
+  for (const f of findings) {
+    const ruleId = `${f.file}:${f.line}:${f.column}`
+    if (!seenRules.has(ruleId)) {
+      seenRules.add(ruleId)
+      savings += f.bytes
+    }
+  }
 
   return {
     summary: {
