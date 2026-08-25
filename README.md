@@ -108,17 +108,29 @@ npm install -g asset-sweep
 yarn global add asset-sweep
 ```
 
-### From source (works today for contributors)
+### From source
+
+Cloning gets you the toolchain, not a working CLI — there is no `src/` yet,
+so `npm run build` and `npm link` have nothing to compile or link:
 
 ```bash
 git clone https://github.com/SteveKinzey/Asset-Sweep-Remove-Unused-CSS-JS.git
 cd Asset-Sweep-Remove-Unused-CSS-JS
-npm install
-npm run build
-npm link
+npm ci          # installs the toolchain; 0 known vulnerabilities
+```
+
+Once the scanner lands, the remaining steps become:
+
+```bash
+npm run build   # compiles src/ -> dist/
+npm link        # puts `asset-sweep` on your PATH
 ```
 
 **Requirements:** Node.js >= 18.0.0, npm >= 9.0.0
+
+> The package is marked `private` in `package.json` so it cannot be published
+> by accident while `dist/` and `bin/` do not exist. Remove that field when
+> there is a real build to ship.
 
 ---
 
