@@ -2,7 +2,7 @@ import type { SelectorDef } from '../types.js'
 import type { AssetSweepConfig } from '../config/types.js'
 
 function globToRegExp(pattern: string): RegExp {
-  const escaped = pattern.replace(/[.+^${}()|[\]\\]/g, '\\$&')
+  const escaped = pattern.replace(/[.+^${}()|[\]\\?]/g, '\\$&')
   return new RegExp(`^${escaped.replace(/\*/g, '.*')}$`)
 }
 

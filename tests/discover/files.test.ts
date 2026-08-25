@@ -25,3 +25,14 @@ test('returns results in deterministic order', async () => {
   expect(await discoverFiles(dir, DEFAULT_CONFIG))
     .toEqual(await discoverFiles(dir, DEFAULT_CONFIG))
 })
+
+test('excludes a nested node_modules directory, not just a top-level one', async () => {
+  const dir = await fixture()
+  await mkdir(join(dir, 'packages', 'foo', 'node_modules'), { recursive: true })
+  await writeFile(join(dir, 'packages', 'foo', 'node_modules', 'nested.css'), '.z{}')
+  await writeFile(join(dir, 'packages', 'foo', 'kept.css'), '.k{}')
+
+  const files = await discoverFiles(dir, DEFAULT_CONFIG)
+  const names = files.map(f => f.split('/').pop()).sort()
+  expect(names).toEqual(['a.css', 'b.html', 'kept.css'])
+})

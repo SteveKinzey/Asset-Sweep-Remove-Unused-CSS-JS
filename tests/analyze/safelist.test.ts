@@ -32,3 +32,9 @@ test('ignoreSelectors matches the full raw selector', () => {
   const cfg = { ...DEFAULT_CONFIG, ignoreSelectors: ['[data-toggle]'] }
   expect(isSafelisted(def('x', '[data-toggle]'), cfg)).toBe(true)
 })
+
+test('? is treated as a literal character, not a single-char wildcard', () => {
+  const cfg = { ...DEFAULT_CONFIG, ignoreClasses: ['abc?'] }
+  expect(isSafelisted(def('ab'), cfg)).toBe(false)
+  expect(isSafelisted(def('abc?'), cfg)).toBe(true)
+})

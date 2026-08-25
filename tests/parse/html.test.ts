@@ -20,3 +20,19 @@ test('finds classes on nested elements', () => {
 test('returns no tokens for markup with no classes or ids', () => {
   expect(parseHtml('<p>hello</p>', 'i.html')).toHaveLength(0)
 })
+
+test('reports the real line number of a class on a nested element in multi-line markup', () => {
+  const source = [
+    '<div class="outer">',
+    '  <span>x</span>',
+    '  <p class="deep">y</p>',
+    '</div>',
+  ].join('\n')
+  const tokens = parseHtml(source, 'i.html')
+
+  const outer = tokens.find(t => t.value === 'outer')
+  const deep = tokens.find(t => t.value === 'deep')
+
+  expect(outer?.line).toBe(1)
+  expect(deep?.line).toBe(3)
+})
