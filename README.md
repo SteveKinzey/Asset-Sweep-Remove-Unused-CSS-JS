@@ -253,14 +253,18 @@ Create `.asset-sweeprc.json` in your project root, or add an `assetSweep` key to
 
 ## 🧩 Framework Guides
 
+> ⚠️ **Reality check before you copy any command below.** Today, usage detection only parses `.css` (for definitions) and `.html` (for usage). `--include` controls which files are *discovered*, not which are *analyzed* — a `.jsx`, `.tsx`, `.vue`, or `.svelte` file matched by `--include` is currently counted in `filesAnalyzed`'s denominator of discovered files but its markup is never read for class/id usage, so selectors used only inside component templates can be misreported as unused. Full JSX/Vue/Svelte template parsing is planned (see [Project Status](#-project-status)) but not built yet. Point `scan` at your **rendered/compiled HTML output** for accurate results today, or safelist generously in the meantime.
+
 ### React and Next.js
 
 ```bash
 asset-sweep scan ./src \
-  --include "**/*.{jsx,tsx,css,scss}" \
+  --include "**/*.{jsx,tsx,css}" \
   --exclude "**/*.test.{jsx,tsx}" \
   --report json
 ```
+
+`.jsx`/`.tsx` files are discovered by this `--include` but their markup is **not yet parsed** for class usage (see the reality check above), so a class used only inside a component will be misreported as unused until you safelist it. Treat this `--include` as the target pattern for when JSX parsing ships. (`.scss` is also not compiled or parsed — only literal `.css` files are read for selector definitions.)
 
 Safelist Next.js internals so the framework's own classes survive:
 
@@ -274,6 +278,8 @@ Safelist Next.js internals so the framework's own classes survive:
 asset-sweep scan ./src --include "**/*.{vue,js,ts,css}"
 ```
 
+`.vue` files are not parsed yet either (see the reality check above) — Single File Component `<template>` markup is invisible to `scan` today, so classes used only inside `.vue` templates will be misreported as unused until safelisted or until `.vue` support ships.
+
 Vue scoped styles compile to `data-v-*` attributes — safelist them:
 
 ```json
@@ -284,10 +290,10 @@ Vue scoped styles compile to `data-v-*` attributes — safelist them:
 
 ```bash
 asset-sweep scan ./public \
-  --include "**/*.{html,css,js}" \
-  --safe-mode \
-  --dry-run
+  --include "**/*.{html,css}"
 ```
+
+This is the framework guide that works fully as written today — plain `.html` and `.css` are exactly what `scan` parses. (`--safe-mode` and `--dry-run` are not shown here: both belong to the not-yet-implemented `clean` command, not `scan` — `scan` has no such flags and would silently ignore them if you added them.)
 
 ### WordPress themes
 
@@ -347,12 +353,15 @@ MEDIUM confidence (287)
       "column": 1,
       "bytes": 2356,
       "confidence": "medium",
-      "reason": "No matching class or id found in HTML. JavaScript was not analyzed, so a class applied at runtime would not be detected."
+      "reason": "No matching class or id found in HTML. JavaScript was not analyzed, so a class applied at runtime would not be detected.",
+      "selectorKind": "class"
     }
   ],
   "errors": []
 }
 ```
+
+`selectorKind` is `"class"` or `"id"` for every `css-selector` finding — it's what the text report uses to print `.` versus `#`. `Finding.name` itself never carries a sigil.
 
 ### Why every finding says `medium`, never `high`
 
@@ -382,6 +391,8 @@ asset-sweep scan ./src --threshold 5
 
 ### npm scripts
 
+`analyze` works today; the two `clean:*` scripts describe the intended interface for the not-yet-implemented `clean` command (see [Project Status](#-project-status)) and will fail with a usage error if run now:
+
 ```json
 {
   "scripts": {
@@ -396,14 +407,16 @@ asset-sweep scan ./src --threshold 5
 
 ## 🔬 How It Works
 
-1. **Parse** — Read every CSS and JavaScript file matching your `include` patterns
-2. **Extract** — Build an inventory of defined CSS selectors and exported JS symbols
-3. **Cross-reference** — Walk the AST of your markup and components to find every actual usage
-4. **Score** — Assign a confidence level to each unused candidate; dynamic patterns score lower
-5. **Report** — Emit findings with file paths, line numbers, and estimated byte savings
-6. **Clean** *(optional)* — Remove confirmed-unused code, honoring `safeMode` and writing backups
+The target pipeline is six steps; three are real today, three are not (see [Project Status](#-project-status)):
 
-Static analysis is the core tradeoff: it is fast and requires no running browser, but it cannot observe code paths that only exist at runtime. That's what the safelist and `--safe-mode` are for.
+1. **Parse** *(works today, CSS/HTML only)* — Read every `.css` and `.html` file matching your `include` patterns
+2. **Extract** *(works today, CSS only)* — Build an inventory of defined CSS selectors; extracting exported JS symbols is not implemented
+3. **Cross-reference** *(works today, against HTML only)* — Compare defined selectors to classes/ids found in `.html` files; JavaScript- and component-template-rendered markup is not read
+4. **Score** *(works today, capped)* — Assign a confidence level to each unused candidate; Phase 1 caps every finding at `medium` since dynamic-class detection needs the JS parser from step 2
+5. **Report** *(works today)* — Emit findings with file paths, line numbers, and estimated byte savings, as text or JSON
+6. **Clean** *(not implemented)* — Remove confirmed-unused code, honoring `safeMode` and writing backups — this command does not exist in the CLI yet
+
+Static analysis is the core tradeoff: it is fast and requires no running browser, but it cannot observe code paths that only exist at runtime. That's what the safelist is for today; `--safe-mode` is planned for `clean` and does not exist as a `scan` flag.
 
 📄 **[ABOUT.md](./ABOUT.md)** covers the design rationale in more depth — why this is built as one pass over both asset types, and why confidence scoring is the load-bearing piece.
 
@@ -411,15 +424,16 @@ Static analysis is the core tradeoff: it is fast and requires no running browser
 
 ## ⚠️ Limitations
 
-Every unused-code tool shares these constraints. Know them before running `clean`:
+Every unused-code tool shares these constraints, and they apply to `scan`'s findings today even though `clean` (mentioned below as forward guidance) is not implemented yet:
 
-- **Dynamically constructed selectors** — `'btn-' + variant` or `` `col-${n}` `` cannot be resolved statically. Safelist these patterns.
-- **CSS-in-JS** — styled-components and Emotion generate class names at runtime and need specific configuration.
+- **Dynamically constructed selectors** — `'btn-' + variant` or `` `col-${n}` `` cannot be resolved statically, and there is no JavaScript parser yet to even attempt it (see [Project Status](#-project-status)). Safelist these patterns.
+- **CSS-in-JS** — styled-components and Emotion generate class names at runtime and need specific configuration; JS is not analyzed at all yet.
 - **Server-rendered classes** — markup produced by a backend the scanner never sees (WordPress, Rails, Django) must be safelisted.
+- **Component-template markup** — `.jsx`/`.tsx`/`.vue`/`.svelte` templates are not parsed yet either (see [Framework Guides](#-framework-guides)), so classes used only inside components look identical to genuinely dead ones.
 - **Cross-domain references** — code loaded from another origin is not analyzed.
 - **State-dependent styles** — selectors used only in error states, modals, or admin views may look unused if no source file references them.
 
-**Rule of thumb:** run `clean` only on a clean git working tree, always with `--backup`, and test the result before deploying.
+**Rule of thumb (for when `clean` exists):** run `clean` only on a clean git working tree, always with `--backup`, and test the result before deploying. Until then, `scan`'s report is informational — nothing in this tool deletes code today.
 
 ---
 
@@ -431,7 +445,7 @@ Run `asset-sweep scan ./src` for a static analysis of your whole codebase. For a
 
 ### Is it safe to automatically remove unused CSS?
 
-Mostly, with real caveats. Static analysis cannot see class names your code builds at runtime, so always run `--dry-run` first, use `--backup`, safelist dynamic patterns, and test before deploying. Run it against a committed git tree so `git diff` shows you every change.
+Mostly, with real caveats — and note that `clean` (the command that would actually remove code) isn't built yet, so today this is entirely about trusting the `scan` report before you act on it by hand. Static analysis cannot see class names your code builds at runtime, so safelist dynamic patterns and verify against a committed git tree (`git diff` after you make edits) before deploying. Once `clean` ships, the same caution applies to it: always run `--dry-run` first and use `--backup`.
 
 ### What's the difference between Asset Sweep and PurgeCSS?
 
@@ -447,7 +461,7 @@ Indirectly but meaningfully. Unused JavaScript inflates Total Blocking Time and 
 
 ### Does it work with Tailwind CSS?
 
-Tailwind already purges unused utilities at build time via its own content scanner, so Asset Sweep adds little for Tailwind utilities specifically. It's still useful for custom CSS, legacy stylesheets, vendor CSS, and unused JavaScript alongside Tailwind.
+Tailwind already purges unused utilities at build time via its own content scanner, so Asset Sweep adds little for Tailwind utilities specifically. It's still useful for custom CSS, legacy stylesheets, and vendor CSS alongside Tailwind; JavaScript analysis is planned but not implemented yet (see [Project Status](#-project-status)).
 
 ### How much bundle size will I actually save?
 
@@ -455,7 +469,7 @@ It depends entirely on how much debt has accumulated. Mature projects with sever
 
 ### Can I run this in CI without it breaking builds?
 
-Yes. Use `scan` (read-only) with `--threshold`, so the build fails only when unused code exceeds the percentage you set. Never run `clean --confirm` in CI against a repository you can't easily revert.
+Yes. Use `scan` (read-only) with `--threshold`, so the build fails only when unused CSS exceeds the percentage you set. (`clean` doesn't exist yet — once it does, never run `clean --confirm` in CI against a repository you can't easily revert.)
 
 ---
 
