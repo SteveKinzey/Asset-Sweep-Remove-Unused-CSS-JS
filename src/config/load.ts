@@ -14,6 +14,15 @@ function isArrayOfStrings(value: unknown): value is string[] {
 }
 
 /**
+ * A usable config object: non-null, typeof 'object', and not an array.
+ * Shared by both config sources so they cannot drift apart on what counts
+ * as "an object" (arrays and primitives are not valid config containers).
+ */
+function isConfigObject(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value)
+}
+
+/**
  * Validates that any *present* field on a user-supplied config object has
  * the type AssetSweepConfig expects, and copies only known, valid fields
  * onto a partial result. Unknown keys are ignored silently so future config
@@ -61,16 +70,25 @@ async function readJson(path: string): Promise<unknown | undefined> {
 }
 
 export async function loadConfig(dir: string): Promise<AssetSweepConfig> {
-  const rc = await readJson(join(dir, '.asset-sweeprc.json'))
-  if (rc && typeof rc === 'object') {
-    const validated = validateConfigShape(rc as Record<string, unknown>)
+  const rcPath = join(dir, '.asset-sweeprc.json')
+  const rc = await readJson(rcPath)
+  if (rc !== undefined) {
+    if (!isConfigObject(rc)) {
+      throw new Error(`Invalid config: ${rcPath} must contain a JSON object`)
+    }
+    const validated = validateConfigShape(rc)
     return { ...DEFAULT_CONFIG, ...validated }
   }
+
   const pkg = await readJson(join(dir, 'package.json'))
-  const scoped = (pkg as { assetSweep?: Record<string, unknown> })?.assetSweep
-  if (scoped) {
+  const scoped = (pkg as { assetSweep?: unknown } | undefined)?.assetSweep
+  if (scoped !== undefined) {
+    if (!isConfigObject(scoped)) {
+      throw new Error('Invalid config: "assetSweep" in package.json must be a JSON object')
+    }
     const validated = validateConfigShape(scoped)
     return { ...DEFAULT_CONFIG, ...validated }
   }
+
   return { ...DEFAULT_CONFIG }
 }
