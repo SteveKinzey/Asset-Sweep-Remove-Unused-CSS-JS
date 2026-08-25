@@ -240,7 +240,7 @@ Create `.asset-sweeprc.json` in your project root, or add an `assetSweep` key to
 |---|---|---|---|
 | `include` | `string[]` | `**/*.{html,js,jsx,ts,tsx,vue,svelte,css}` | Files to analyze |
 | `exclude` | `string[]` | `**/node_modules/**,**/dist/**` | Files to skip |
-| `ignoreSelectors` | `string[]` | `[]` | CSS selectors to always preserve |
+| `ignoreSelectors` | `string[]` | `[]` | Full CSS selector patterns (glob, matched against the raw selector text) to always preserve |
 | `ignoreClasses` | `string[]` | `[]` | Class name patterns (glob) to always preserve |
 | `preserveComments` | `boolean` | `false` | Reserved for `clean` (keep comments in modified CSS/JS) — accepted and validated today, but has no effect since `clean` doesn't exist yet |
 | `safeMode` | `boolean` | `false` | Reserved for `clean` (conservative removal) — accepted and validated today, but has no effect since `clean` doesn't exist yet |
@@ -253,7 +253,7 @@ Create `.asset-sweeprc.json` in your project root, or add an `assetSweep` key to
 
 ## 🧩 Framework Guides
 
-> ⚠️ **Reality check before you copy any command below.** Today, usage detection only parses `.css` (for definitions) and `.html` (for usage). `--include` controls which files are *discovered*, not which are *analyzed* — a `.jsx`, `.tsx`, `.vue`, or `.svelte` file matched by `--include` is currently counted in `filesAnalyzed`'s denominator of discovered files but its markup is never read for class/id usage, so selectors used only inside component templates can be misreported as unused. Full JSX/Vue/Svelte template parsing is planned (see [Project Status](#-project-status)) but not built yet. Point `scan` at your **rendered/compiled HTML output** for accurate results today, or safelist generously in the meantime.
+> ⚠️ **Reality check before you copy any command below.** Today, usage detection only parses `.css` (for definitions) and `.html` (for usage). `--include` controls which files are *discovered*, not which are *analyzed* — a `.jsx`, `.tsx`, `.vue`, or `.svelte` file matched by `--include` is discovered (so it doesn't break the scan) but is **not** counted in `filesAnalyzed` and its markup is never read for class/id usage — `filesAnalyzed` only counts `.css`/`.html` files actually parsed. So selectors used only inside component templates can be misreported as unused. Full JSX/Vue/Svelte template parsing is planned (see [Project Status](#-project-status)) but not built yet. Point `scan` at your **rendered/compiled HTML output** for accurate results today, or safelist generously in the meantime.
 
 ### React and Next.js
 

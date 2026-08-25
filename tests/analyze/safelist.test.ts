@@ -33,6 +33,22 @@ test('ignoreSelectors matches the full raw selector', () => {
   expect(isSafelisted(def('x', '[data-toggle]'), cfg)).toBe(true)
 })
 
+test('ignoreSelectors supports glob wildcards, matched against the raw selector', () => {
+  const cfg = { ...DEFAULT_CONFIG, ignoreSelectors: ['[data-v-*]'] }
+  expect(isSafelisted(def('x', '[data-v-123] .x'), cfg)).toBe(true)
+})
+
+test('an exact ignoreSelectors pattern (no wildcard) still matches exactly, as before', () => {
+  const cfg = { ...DEFAULT_CONFIG, ignoreSelectors: ['[data-toggle]'] }
+  expect(isSafelisted(def('x', '[data-toggle]'), cfg)).toBe(true)
+  expect(isSafelisted(def('x', 'totally-unrelated'), cfg)).toBe(false)
+})
+
+test('a non-matching ignoreSelectors glob does not safelist', () => {
+  const cfg = { ...DEFAULT_CONFIG, ignoreSelectors: ['[data-v-*]'] }
+  expect(isSafelisted(def('x', '.unrelated'), cfg)).toBe(false)
+})
+
 test('? is treated as a literal character, not a single-char wildcard', () => {
   const cfg = { ...DEFAULT_CONFIG, ignoreClasses: ['abc?'] }
   expect(isSafelisted(def('ab'), cfg)).toBe(false)
