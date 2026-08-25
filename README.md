@@ -48,6 +48,7 @@ Because JavaScript is not analyzed yet, Asset Sweep cannot prove a selector is u
 - [Understanding the Report](#-understanding-the-report)
 - [CI/CD Integration](#-cicd-integration)
 - [How It Works](#-how-it-works)
+- [Measured Performance](#-measured-performance)
 - [Limitations](#-limitations)
 - [FAQ](#-frequently-asked-questions)
 - [Roadmap](#-roadmap)
@@ -441,6 +442,21 @@ The target pipeline is six steps; three are real today, three are not (see [Proj
 Static analysis is the core tradeoff: it is fast and requires no running browser, but it cannot observe code paths that only exist at runtime. That's what the safelist is for today; `--safe-mode` is planned for `clean` and does not exist as a `scan` flag.
 
 📄 **[ABOUT.md](./ABOUT.md)** covers the design rationale in more depth — why this is built as one pass over both asset types, and why confidence scoring is the load-bearing piece.
+
+---
+
+## 📏 Measured Performance
+
+These are the first real measurements ever taken of this tool — not estimates, not targets. Run on a MacBook (macOS, Darwin 25.5.0) with Node.js 18+, against the built CLI (`dist/`), on **synthetic generated fixtures**, not a real-world project. Nothing about parallelism, streaming, or memory efficiency is implemented — this is just how long `scan` currently takes on these two inputs.
+
+Fixture shape: N `.css` files, each containing 50 selectors, and N `.html` files, each using 25 of those selectors — so exactly half of all defined selectors are unused.
+
+| Fixture | Files | Selectors | Used | Time | Peak RSS |
+|---|---:|---:|---:|---|---|
+| A | 400 | 10,000 | 5,000 | 0.22–0.23 s (3 runs) | — |
+| B | 2,000 | 50,000 | 25,000 | 0.66 s | 129 MB |
+
+No claim is made here about how this scales to a real codebase, whether it stays this fast at larger sizes, or how memory behaves outside these two data points — that hasn't been measured yet.
 
 ---
 
