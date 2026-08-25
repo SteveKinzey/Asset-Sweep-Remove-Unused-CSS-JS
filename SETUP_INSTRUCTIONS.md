@@ -118,7 +118,7 @@ git push origin main
 
 ### 6. Verify on GitHub
 
-1. Go to https://github.com/SteveKinzey/Asset-Sweep-Remove-Unused-CSS-JS
+1. Go to https://github.com/YOUR_ACCOUNT_NAME/Asset-Sweep-Remove-Unused-CSS-JS
 2. Refresh the page
 3. You should see:
    - README.md displayed on the main page
@@ -167,7 +167,7 @@ After pushing to GitHub:
 
 **Git won't push?**
 - Verify you're authenticated with GitHub
-- Check your branch is set to main
+- Check that your branch is set to main
 - Try `git status` to see current state
 
 **GitHub Actions failing?**
