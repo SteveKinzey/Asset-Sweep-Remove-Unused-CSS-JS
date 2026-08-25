@@ -1,4 +1,4 @@
-import { parseHtml } from '../../src/parse/html.js'
+import { parseHtml, extractInlineCss } from '../../src/parse/html.js'
 
 // Every fixture below deliberately puts the asserted token on a line other
 // than 1. Earlier in this project's build, a wrong parse5 option made
@@ -154,4 +154,70 @@ test('ordinary markup outside any <template> still works alongside template cont
   const regular = tokens.find(t => t.value === 'regular')
   expect(regular?.file).toBe('i.html')
   expect(regular?.line).toBe(3)
+})
+
+describe('extractInlineCss', () => {
+  test('extracts a selector defined inside an inline <style> block, attributed to the html file', () => {
+    const source = [
+      '<html>',
+      '<head>',
+      '<style>',
+      '.inline-rule { color: red; }',
+      '</style>',
+      '</head>',
+      '</html>',
+    ].join('\n')
+    const defs = extractInlineCss(source, 'i.html')
+
+    expect(defs.map(d => d.name)).toEqual(['inline-rule'])
+    expect(defs[0]?.file).toBe('i.html')
+  })
+
+  // The line-offset trap: parseCss reports lines relative to the extracted
+  // CSS string, starting at 1. Naively using that number would put every
+  // inline finding at the wrong line (or, if the offset math is dropped
+  // entirely, line 1 for every rule regardless of where the <style> block
+  // actually sits) — the exact bug class this project has already been
+  // bitten by once for HTML token lines. The <style> block here starts
+  // partway down the file specifically so a wrong (or missing) offset
+  // shows up as a wrong assertion, not a coincidentally-correct one.
+  test('reports the real line number of a rule inside a <style> block that starts partway down the file, not line 1', () => {
+    const source = [
+      '<html>',           // 1
+      '<head>',            // 2
+      '<title>x</title>',  // 3
+      '<meta charset="utf-8">', // 4
+      '<style>',           // 5
+      '.offset-rule { color: red; }', // 6
+      '</style>',          // 7
+      '</head>',           // 8
+      '</html>',           // 9
+    ].join('\n')
+    const defs = extractInlineCss(source, 'i.html')
+
+    expect(defs.map(d => d.name)).toEqual(['offset-rule'])
+    expect(defs[0]?.line).toBe(6)
+  })
+
+  test('extracts definitions from multiple <style> blocks in one document', () => {
+    const source = [
+      '<html>',
+      '<head>',
+      '<style>.first-block { color: red; }</style>',
+      '</head>',
+      '<body>',
+      '<style>',
+      '.second-block { color: blue; }',
+      '</style>',
+      '</body>',
+      '</html>',
+    ].join('\n')
+    const defs = extractInlineCss(source, 'i.html')
+
+    expect(defs.map(d => d.name).sort()).toEqual(['first-block', 'second-block'])
+  })
+
+  test('returns no definitions when the document has no <style> blocks', () => {
+    expect(extractInlineCss('<p class="a"></p>', 'i.html')).toHaveLength(0)
+  })
 })

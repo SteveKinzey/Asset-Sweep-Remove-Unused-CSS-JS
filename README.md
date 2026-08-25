@@ -16,6 +16,7 @@
 **Works today**, via `asset-sweep scan`:
 
 - Detects unused CSS selectors (classes and IDs) by cross-referencing every selector defined in your CSS against every class/id actually used in your HTML
+- Scans CSS defined in `.css` files and in inline `<style>` blocks inside `.html` files; inline `<script>` contents are not analyzed (JavaScript analysis is not implemented — see below)
 - Loads and validates `.asset-sweeprc.json` / the `assetSweep` key in `package.json`
 - Safelisting via `ignoreSelectors` and `ignoreClasses` (glob patterns, e.g. `js-*`)
 - Confidence scoring per finding, filterable with `--min-confidence`
@@ -433,7 +434,7 @@ asset-sweep scan ./src --threshold 5
 The target pipeline is six steps; three are real today, three are not (see [Project Status](#-project-status)):
 
 1. **Parse** *(works today, CSS/HTML only)* — Read every `.css` and `.html` file matching your `include` patterns
-2. **Extract** *(works today, CSS only)* — Build an inventory of defined CSS selectors; extracting exported JS symbols is not implemented
+2. **Extract** *(works today, CSS only)* — Build an inventory of defined CSS selectors from `.css` files and from inline `<style>` blocks in `.html` files; extracting exported JS symbols is not implemented, and inline `<script>` contents are never scanned for anything
 3. **Cross-reference** *(works today, against HTML only)* — Compare defined selectors to classes/ids found in `.html` files; JavaScript- and component-template-rendered markup is not read
 4. **Score** *(works today, capped)* — Assign a confidence level to each unused candidate; Phase 1 caps every finding at `medium` since dynamic-class detection needs the JS parser from step 2
 5. **Report** *(works today)* — Emit findings with file paths, line numbers, and estimated byte savings, as text or JSON

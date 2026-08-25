@@ -5,7 +5,7 @@ import type { AssetSweepConfig } from './config/types.js'
 import { loadConfig } from './config/load.js'
 import { discoverFiles } from './discover/files.js'
 import { parseCss } from './parse/css.js'
-import { parseHtml } from './parse/html.js'
+import { parseHtml, extractInlineCss } from './parse/html.js'
 import { analyzeCss } from './analyze/css.js'
 
 function formatBytes(n: number): string {
@@ -49,6 +49,10 @@ export async function scan(
         filesAnalyzed++
       } else if (ext === '.html') {
         tokens.push(...parseHtml(source, label))
+        // Inline <style> blocks contribute CSS definitions exactly as a
+        // .css file would, attributed to this .html file so a finding
+        // points at the .html path.
+        defs.push(...extractInlineCss(source, label))
         filesAnalyzed++
       }
       // Other extensions are discovered but not yet parsed; Phase 2 adds them.

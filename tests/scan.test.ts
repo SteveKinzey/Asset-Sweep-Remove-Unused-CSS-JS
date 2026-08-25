@@ -23,6 +23,96 @@ test('reports a selector defined in CSS but absent from HTML', async () => {
   expect(result.summary.unusedCss).toBe(1)
 })
 
+describe('inline <style> blocks in HTML are scanned for definitions', () => {
+  test('an unused rule inside an inline <style> block is reported, attributed to the .html file', async () => {
+    const dir = await project({
+      'index.html': [
+        '<html><head><style>',
+        '.inline-unused { color: red; }',
+        '</style></head><body></body></html>',
+      ].join('\n'),
+    })
+    const result = await scan(dir)
+
+    expect(result.findings.map(f => f.name)).toEqual(['inline-unused'])
+    expect(result.findings[0]?.file).toMatch(/index\.html$/)
+  })
+
+  test('a rule inside an inline <style> block whose class is used in the same document is NOT reported', async () => {
+    const dir = await project({
+      'index.html': [
+        '<html><head><style>',
+        '.inline-used { color: red; }',
+        '</style></head>',
+        '<body><div class="inline-used"></div></body></html>',
+      ].join('\n'),
+    })
+    const result = await scan(dir)
+
+    expect(result.findings.map(f => f.name)).not.toContain('inline-used')
+  })
+
+  // Line-offset trap, exercised end to end through scan(): the <style>
+  // block sits well below line 1, so the finding's reported line must be
+  // its true position in the .html file — not line 1, and not its offset
+  // within the extracted <style> text alone.
+  test('a finding inside a <style> block starting around line 5 reports its true line in the .html file', async () => {
+    const dir = await project({
+      'index.html': [
+        '<html>',           // 1
+        '<head>',            // 2
+        '<title>x</title>',  // 3
+        '<meta charset="utf-8">', // 4
+        '<style>',           // 5
+        '.offset-unused { color: red; }', // 6
+        '</style>',          // 7
+        '</head><body></body></html>', // 8
+      ].join('\n'),
+    })
+    const result = await scan(dir)
+    const finding = result.findings.find(f => f.name === 'offset-unused')
+
+    expect(finding).toBeDefined()
+    expect(finding?.line).toBe(6)
+  })
+
+  test('multiple <style> blocks in one document are all scanned', async () => {
+    const dir = await project({
+      'index.html': [
+        '<html><head>',
+        '<style>.first-unused { color: red; }</style>',
+        '</head><body>',
+        '<style>',
+        '.second-unused { color: blue; }',
+        '</style>',
+        '</body></html>',
+      ].join('\n'),
+    })
+    const result = await scan(dir)
+
+    expect(result.findings.map(f => f.name).sort())
+      .toEqual(['first-unused', 'second-unused'])
+  })
+
+  test('totalCssSelectors includes selectors defined in inline <style> blocks', async () => {
+    const dir = await project({
+      'styles.css': '.from-css { color: red; }',
+      'index.html': [
+        '<html><head><style>',
+        '.from-inline-style { color: blue; }',
+        '</style></head><body></body></html>',
+      ].join('\n'),
+    })
+    const result = await scan(dir)
+
+    // Both the .css definition and the inline <style> definition must be
+    // counted, since --threshold's ratio is unused/totalCssSelectors —
+    // an inline-only rule that isn't counted here would silently make
+    // the threshold gate less strict than it claims to be.
+    expect(result.summary.totalCssSelectors).toBe(2)
+  })
+})
+
 test('a malformed file is recorded as an error without aborting the scan', async () => {
   const dir = await project({
     'broken.css': '.a { color: red',      // unclosed block
