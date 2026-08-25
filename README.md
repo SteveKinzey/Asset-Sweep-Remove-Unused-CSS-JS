@@ -382,6 +382,8 @@ asset-sweep scan ./src --dry-run --threshold 5
 
 Static analysis is the core tradeoff: it is fast and requires no running browser, but it cannot observe code paths that only exist at runtime. That's what the safelist and `--safe-mode` are for.
 
+📄 **[ABOUT.md](./ABOUT.md)** covers the design rationale in more depth — why this is built as one pass over both asset types, and why confidence scoring is the load-bearing piece.
+
 ---
 
 ## ⚠️ Limitations

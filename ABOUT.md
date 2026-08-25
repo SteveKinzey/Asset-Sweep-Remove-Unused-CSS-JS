@@ -1,153 +1,76 @@
 # About Asset Sweep
 
-## The Problem
+> **Status:** Asset Sweep is pre-alpha. Nothing described here is implemented yet.
+> This document records the intended design and the reasoning behind it. For what
+> the tool aims to do and how it compares to existing options, see the
+> [README](./README.md).
 
-Every codebase accumulates technical debt over time. As features are added, removed, and refactored, CSS rules and JavaScript functions often remain even after they're no longer used. This dead code:
+## Why build another cleanup tool
 
-- **Slows down page loads** — Larger asset files = slower parsing and execution
-- **Increases bundle size** — Every KB matters on mobile networks
-- **Makes maintenance harder** — Developers waste time deciphering what code is actually needed
-- **Creates false complexity** — Understanding the actual codebase becomes increasingly difficult
+Removing dead CSS and JavaScript is a solved problem in pieces and an unsolved
+problem as a whole. [PurgeCSS](https://purgecss.com/) handles CSS well.
+[Knip](https://knip.dev/) handles unused JavaScript exports well. Bundler
+tree-shaking handles module graphs well.
 
-Traditional approaches to solving this problem are either:
-1. **Manual audits** — Time-consuming, error-prone, and needs to be repeated constantly
-2. **Tree-shaking tools** — Only work with certain bundlers and frameworks
-3. **CSS-in-JS libraries** — Add runtime overhead and aren't suitable for all projects
-4. **Custom scripts** — Require deep framework knowledge to build correctly
+What no tool does today is treat them as one question. In practice a deleted
+feature leaves behind *both* its stylesheet rules and its utility module, and the
+same safelist governs both — a class applied at runtime and the function that
+applies it are the same decision. Running two tools means maintaining two configs,
+reconciling two reports, and safelisting the same dynamic pattern twice.
 
-## Our Solution
+Asset Sweep's bet is that one pass, one safelist, and one report is worth building
+even though the individual halves already exist.
 
-Asset Sweep was built to solve this problem once and for all. It's a framework-agnostic tool that works with any codebase—whether you're using React, Vue, vanilla JavaScript, or even static HTML.
+## Intended technical approach
 
-### What Makes Asset Sweep Different
+A four-phase static analysis, no browser required:
 
-**🎯 Universal Compatibility**
-- Works with any stack or framework
-- No configuration needed for most projects
-- Handles both modern and legacy codebases
+1. **Collection** — parse HTML, CSS, and JavaScript; inventory every CSS selector
+   defined and every JavaScript export declared
+2. **Cross-reference** — walk templates and components for selector usage and
+   symbol references; build a usage graph
+3. **Analysis** — flag definitions with no references, and score each finding by
+   confidence, since dynamically constructed names cannot be resolved statically
+4. **Reporting** — emit human-readable and JSON output, highest-confidence findings
+   first
 
-**🔍 Intelligent Analysis**
-- AST-based parsing understands your code structure
-- Tracks actual usage patterns, not just file imports
-- Minimizes false positives with confidence scoring
+Confidence scoring is the load-bearing part. A tool that reports everything it
+cannot prove is used will delete working code the first time someone writes
+`` `col-${n}` ``. Ranking by confidence, defaulting to preservation, and requiring
+an explicit flag to modify files are what make automated removal defensible.
 
-**👁️ Visibility & Control**
-- Detailed reports show exactly what's unused and why
-- Dry-run mode lets you preview changes before committing
-- Never makes changes without your explicit approval
+## Design principles
 
-**⚡ Performance-First**
-- Scans massive codebases in seconds
-- Streaming analysis means constant memory footprint
-- Parallel processing on modern hardware
+1. **Suggest, don't force** — reporting is the default; removal is opt-in
+2. **Safe by default** — dry-run and backups exist because static analysis has
+   blind spots, and pretending otherwise costs users their working code
+3. **Explain every finding** — a removal you cannot justify is one you should not
+   make
+4. **One tool, any stack** — framework-specific solutions fragment the problem
+5. **No invented numbers** — performance claims get published when they come from
+   real benchmarks against real projects, not before
 
-**🔄 CI/CD Ready**
-- JSON output for automation
-- Exit codes for build pipeline integration
-- GitHub Actions, pre-commit hooks, and more
+## Direction
 
-## Use Cases
+Roughly in order of intended priority:
 
-### 1. **Legacy Application Cleanup**
-Inherited a 10-year-old codebase with accumulated cruft? Asset Sweep identifies what can safely be removed, helping you modernize incrementally.
+- Core scanner and the `scan` command
+- `clean` with dry-run, backups, and safe mode
+- Vite and webpack plugins
+- CSS-in-JS support (styled-components, Emotion)
+- Editor integration for inline feedback
 
-### 2. **Performance Optimization**
-Working toward Core Web Vitals goals? Dead code removal is often the quick win that frees up your performance budget.
+The [roadmap](./README.md#-roadmap) tracks what is actually committed to.
 
-### 3. **Dependency Removal**
-Unsure which utility libraries you actually use? Asset Sweep reveals unused CSS frameworks or JavaScript helpers so you can drop them entirely.
+## Prior art
 
-### 4. **Migration Support**
-Migrating from one framework to another? Use Asset Sweep to identify dead code in the old framework before removing it.
+Asset Sweep borrows liberally: **PurgeCSS** for CSS extraction strategy, **Knip**
+for how to reason about unused exports, **ESLint** for configuration and plugin
+architecture, and **Prettier** for the principle that tooling should need almost
+no configuration to be useful.
 
-### 5. **Continuous Maintenance**
-Run it as part of your CI/CD pipeline to catch regressions—when a feature is removed, Asset Sweep ensures its styles and scripts are deleted too.
+## Contributing
 
-### 6. **Team Onboarding**
-Help new team members understand what code matters by showing them what doesn't. It's a powerful learning tool for understanding large codebases.
-
-## Technical Approach
-
-Asset Sweep uses a multi-pass analysis strategy:
-
-### Phase 1: Collection
-- Parse all HTML, CSS, and JavaScript files
-- Extract all CSS selectors and class/ID definitions
-- Extract all JavaScript exports and function declarations
-
-### Phase 2: Cross-Reference
-- Scan HTML and template files for CSS class/ID usage
-- Scan JavaScript for function/export references
-- Build a dependency graph of what's used
-
-### Phase 3: Analysis
-- Identify selectors with no references
-- Identify functions with no calls
-- Calculate confidence scores for each finding
-- Estimate size savings
-
-### Phase 4: Reporting
-- Generate human-readable reports
-- Provide JSON output for tooling
-- Highlight high-confidence matches first
-
-## Performance Impact
-
-Typical projects see:
-- **10-30% reduction** in CSS file size
-- **5-15% reduction** in JavaScript file size
-- **15-20ms faster** FCP (First Contentful Paint)
-- **50-200ms faster** LCP (Largest Contentful Paint)
-
-These numbers compound when combined with other optimization techniques like minification and compression.
-
-## Philosophy
-
-We believe:
-
-1. **Developers should have control** — Tools should suggest, not force
-2. **Dead code removal should be safe** — Verification and dry-runs reduce risk
-3. **Performance matters** — Every KB matters, especially on mobile networks
-4. **Transparency is essential** — You should understand what's being removed and why
-5. **Simplicity wins** — One tool that works everywhere beats specialized solutions for each framework
-
-## Who Built This
-
-Asset Sweep was created by developers who have felt the pain of bloated codebases and wanted a better way. We've worked on projects ranging from small startups to enterprise applications, and we saw this problem repeated everywhere.
-
-The tool draws inspiration from successful projects like:
-- **PurgeCSS** — For CSS removal strategies
-- **Webpack** — For AST analysis approaches
-- **ESLint** — For plugin architecture and configuration
-- **Prettier** — For the philosophy that tooling should "just work"
-
-## Future Vision
-
-We're committed to making Asset Sweep the standard for asset cleanup:
-
-- **IDE Integration** — Real-time feedback in VS Code and other editors
-- **Build Tool Plugins** — First-class webpack, Vite, and esbuild integration
-- **Web Dashboard** — Visual reporting and progress tracking
-- **Team Features** — Share reports, set organization standards
-- **Advanced Analysis** — CSS-in-JS support, runtime tracking integration
-- **Performance Profiler** — Automatic impact measurement
-
-## Get Involved
-
-Asset Sweep is open source and community-driven. We welcome:
-- Bug reports and feature requests
-- Pull requests and code contributions
-- Framework-specific configurations
-- Documentation improvements
-- Real-world case studies
-
-## Quick Links
-
-- **Repository** — [github.com/SteveKinzey/Asset-Sweep-Remove-Unused-CSS-JS](https://github.com/SteveKinzey/Asset-Sweep-Remove-Unused-CSS-JS)
-- **Issues** — Report bugs or request features
-- **Discussions** — Ask questions and share ideas
-- **Contributing** — [CONTRIBUTING.md](./CONTRIBUTING.md)
-
----
-
-**Made for developers, by developers. Keeping the web fast, one unused selector at a time.**
+The scanner does not exist yet, which makes this an unusually good time to shape
+it. See [CONTRIBUTING.md](./CONTRIBUTING.md) and the
+[open issues](https://github.com/SteveKinzey/Asset-Sweep-Remove-Unused-CSS-JS/issues).
