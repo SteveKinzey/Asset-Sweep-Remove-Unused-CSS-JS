@@ -322,7 +322,7 @@ Asset Sweep Report
 
 Summary
   Files analyzed:    42
-  Unused CSS rules:  287
+  Unused selectors:  287 / 640  (44.8%)
   Estimated savings: 145.2 KB
 
 MEDIUM confidence (287)

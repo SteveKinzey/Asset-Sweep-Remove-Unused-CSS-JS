@@ -13,9 +13,19 @@ export function renderText(result: ScanResult): string {
   const { summary, findings, errors } = result
   const lines: string[] = ['Asset Sweep Report', '==================', '']
 
+  // --threshold gates CI on unused-selectors ÷ total-selectors — the exact
+  // bug this line guards against was computing that ratio over the wrong
+  // denominator (files, not selectors) with nothing in the report to show
+  // it. Printing both the fraction and the percentage here means a future
+  // unit mismatch is visible on sight instead of latent in the exit code.
+  const total = summary.totalCssSelectors
+  const percent = total > 0 ? (summary.unusedCss / total) * 100 : 0
+
   lines.push('Summary')
   lines.push(`  Files analyzed:    ${summary.filesAnalyzed}`)
-  lines.push(`  Unused CSS rules:  ${summary.unusedCss}`)
+  lines.push(
+    `  Unused selectors:  ${summary.unusedCss} / ${total}  ` +
+    `(${percent.toFixed(1)}%)`)
   lines.push(`  Estimated savings: ${summary.estimatedSavings}`)
   if (summary.errors > 0) {
     lines.push(`  Files with errors: ${summary.errors}`)

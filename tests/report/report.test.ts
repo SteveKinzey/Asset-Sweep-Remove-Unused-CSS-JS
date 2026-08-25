@@ -120,3 +120,25 @@ test('a clean scan with no usage-source errors prints no warning line', () => {
   const out = renderText(result)
   expect(out).not.toMatch(/WARNING/)
 })
+
+test('the summary prints the unused-selector ratio as a fraction and a percentage', () => {
+  // 1 unused of 4 total selectors defined = 25.0% — printing both numbers
+  // the ratio is computed from means a future unit mismatch (e.g. the
+  // original --threshold bug, which divided selectors by files) would be
+  // visible on sight instead of latent in a bare percentage or exit code.
+  const out = renderText(result)
+  expect(out).toContain('1 / 4')
+  expect(out).toContain('25.0%')
+})
+
+test('a project with zero CSS selectors defined shows 0.0%, not NaN%', () => {
+  const zero: ScanResult = {
+    summary: { ...result.summary, unusedCss: 0, totalCssSelectors: 0 },
+    findings: [],
+    errors: [],
+  }
+  const out = renderText(zero)
+  expect(out).toContain('0 / 0')
+  expect(out).toContain('0.0%')
+  expect(out).not.toContain('NaN')
+})
