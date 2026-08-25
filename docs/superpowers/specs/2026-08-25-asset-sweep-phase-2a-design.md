@@ -41,7 +41,7 @@ makes a live export look dead.
 Splitting means the work that makes the SHIPPED feature correct lands first, and the
 work that builds a new feature is specced on its own terms.
 
-**Phase 2b — dead exports — will be specced separately, built on `ts.createProgram`
+**Phase 2c — dead exports — will be specced separately, built on `ts.createProgram`
 with `allowJs: true` and the language service's `findReferences`, rather than a
 hand-rolled Babel module graph.** TypeScript already solves resolution, re-export
 chains, namespace-import member resolution, and CommonJS. A syntactic graph would
@@ -94,8 +94,10 @@ Only **literal** strings count. A non-literal argument is a dynamic signal inste
 (section 6), never a usage — treating an unknown value as usage would suppress genuine
 findings.
 
-Consequence: some findings Phase 1 currently reports will correctly DISAPPEAR. Tests
-must assert that disappearance explicitly, not merely that new behavior appears.
+Consequence: some classes Phase 1 currently reports as unused are provably used. They
+are RECLASSIFIED, not removed — they leave the findings list and appear in the
+inventory as `used-via-js` with the file and line that proved it (section 9). Nothing
+silently vanishes from the report.
 
 ## 5. CSS Modules
 
@@ -111,7 +113,7 @@ an explicit `.css` extension, so no extension guessing or index resolution is ne
 a relative specifier resolves against the importing file's directory and nothing more.
 
 **When a specifier cannot be resolved** — an aliased path such as
-`@/styles/x.module.css`, since alias resolution is Phase 2b — the usage is recorded
+`@/styles/x.module.css`, since alias resolution is Phase 2c — the usage is recorded
 **unscoped** rather than dropped. Unscoped means it applies globally: more
 conservative, and it cannot manufacture a false positive. Dropping it would.
 
@@ -281,5 +283,6 @@ Each ends with a working `scan`.
 | 2a.6 | `--report html`, self-contained |
 | 2a.7 | Docs sync, including what remains unanalyzed |
 
-2a.2 and 2a.3 change existing output. Their tests must assert the disappearance of
-now-provably-used findings and the appearance of `high` confidence, both explicitly.
+2a.2 and 2a.3 change existing output. Their tests must assert both directions
+explicitly: that a now-provably-used class is reclassified with its evidence location,
+and that a class no dynamic signal reaches reaches `high` confidence.
