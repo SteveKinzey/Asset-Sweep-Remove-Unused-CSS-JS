@@ -1,0 +1,23 @@
+/* --- SHOULD BE FLAGGED (genuinely unused) --- */
+.unused-class            { color: red }
+#unused-id               { color: red }
+.unused-a .unused-b      { color: red }
+.unused-attr[data-x="1"] { color: red }
+:is(.unused-is1, .unused-is2) > .unused-is3 { color: red }
+:where(.unused-where) .unused-where2        { color: red }
+@media (min-width: 100px) { .unused-in-media { color: red } }
+@supports (display: grid) { .unused-in-supports { color: red } }
+
+/* --- MUST NOT BE FLAGGED --- */
+.used-class              { color: green }   /* used in HTML          */
+#used-id                 { color: green }   /* used in HTML          */
+.used-in-template        { color: green }   /* inside <template>     */
+.used-in-nested-template { color: green }   /* nested <template>     */
+.used-multi              { color: green }   /* multi-class attribute */
+.used-spaced              { color: green }   /* irregular whitespace  */
+
+.js-safelisted           { color: green }   /* ignoreClasses glob    */
+.deep-scoped[data-v-abc] { color: green }   /* ignoreSelectors glob  */
+.guard:not(.not-arg)     { color: green }   /* .not-arg is a guard   */
+.host:has(.has-arg)      { color: green }   /* .has-arg is a guard   */
+/* .comment-only { color: red } */          /* comment, not a rule   */
