@@ -516,7 +516,7 @@ interface Node {
 
 export function parseHtml(source: string, file: string): UsageToken[] {
   const tokens: UsageToken[] = []
-  const doc = parse(source, { sourceCodeLocations: true }) as unknown as Node
+  const doc = parse(source, { sourceCodeLocationInfo: true }) as unknown as Node
 
   const visit = (node: Node): void => {
     const line = node.sourceCodeLocation?.startLine ?? 1
