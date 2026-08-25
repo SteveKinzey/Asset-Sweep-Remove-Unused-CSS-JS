@@ -22,6 +22,16 @@ export function renderText(result: ScanResult): string {
   }
   lines.push('')
 
+  if (summary.usageSourceErrors > 0) {
+    const plural = summary.usageSourceErrors === 1 ? 'file' : 'files'
+    lines.push(
+      `WARNING: ${summary.usageSourceErrors} usage-source ${plural} ` +
+      '(e.g. .html) could not be read or parsed. This scan is incomplete: ' +
+      'findings below may be false positives, so their confidence has ' +
+      'been downgraded to low.')
+    lines.push('')
+  }
+
   if (findings.length === 0) {
     lines.push('No unused assets found.')
     return lines.join('\n')

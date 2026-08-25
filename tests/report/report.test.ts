@@ -4,7 +4,8 @@ import type { ScanResult } from '../../src/types.js'
 
 const result: ScanResult = {
   summary: { filesAnalyzed: 2, unusedCss: 1, unusedJs: 0,
-             estimatedSavings: '1.2 KB', errors: 0, semanticMode: false },
+             estimatedSavings: '1.2 KB', errors: 0, semanticMode: false,
+             totalCssSelectors: 4, usageSourceErrors: 0 },
   findings: [{ type: 'css-selector', name: 'ghost', file: 'a.css', line: 3,
                column: 1, bytes: 1200, confidence: 'medium',
                reason: 'JavaScript was not analyzed.' }],
@@ -100,4 +101,22 @@ test('a class finding renders with a . sigil and an id finding renders with a # 
   expect(out).toContain('.ghost  styles.css:2')
   expect(out).toContain('#ghost-id  styles.css:6')
   expect(out).not.toContain('.ghost-id')
+})
+
+test('a scan with unreadable usage-source files prints a visible warning above the findings', () => {
+  const withUsageErrors: ScanResult = {
+    summary: { ...result.summary, usageSourceErrors: 1 },
+    findings: result.findings,
+    errors: [],
+  }
+  const out = renderText(withUsageErrors)
+  expect(out).toMatch(/WARNING/)
+  expect(out).toMatch(/1 usage-source file/i)
+  // The warning must appear before the findings it's warning about.
+  expect(out.indexOf('WARNING')).toBeLessThan(out.indexOf('ghost'))
+})
+
+test('a clean scan with no usage-source errors prints no warning line', () => {
+  const out = renderText(result)
+  expect(out).not.toMatch(/WARNING/)
 })

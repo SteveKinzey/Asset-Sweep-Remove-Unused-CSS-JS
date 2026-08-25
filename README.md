@@ -342,7 +342,8 @@ MEDIUM confidence (287)
     "estimatedSavings": "145.2 KB",
     "errors": 0,
     "semanticMode": false,
-    "totalCssSelectors": 640
+    "totalCssSelectors": 640,
+    "usageSourceErrors": 0
   },
   "findings": [
     {
@@ -365,7 +366,11 @@ MEDIUM confidence (287)
 
 ### Why every finding says `medium`, never `high`
 
-This is expected, not a bug. Phase 1 has no JavaScript parser, so it cannot prove a selector is never constructed dynamically at runtime (e.g. `` el.className = 'old-' + variant ``). Proving that absence is what `high` confidence requires. Until JavaScript analysis ships, every CSS finding is capped at `medium` — treat a `medium` finding as "no static usage found," not "provably safe to delete," and safelist anything your code assembles at runtime via `ignoreClasses` / `ignoreSelectors`.
+This is expected, not a bug. Phase 1 has no JavaScript parser, so it cannot prove a selector is never constructed dynamically at runtime (e.g. `` el.className = 'old-' + variant ``). Proving that absence is what `high` confidence requires. Until JavaScript analysis ships, every CSS finding is normally capped at `medium` — treat a `medium` finding as "no static usage found," not "provably safe to delete," and safelist anything your code assembles at runtime via `ignoreClasses` / `ignoreSelectors`.
+
+### Why a finding sometimes says `low`, and what `usageSourceErrors` means
+
+If a `.html` file (or any future file type that contributes usage — a "usage source") fails to read or parse, the scanner has lost real information about what's actually used, not just definitions. Rather than silently reporting the surviving findings at their usual `medium` confidence — which would assert "not found in HTML" about HTML the tool never actually read — every `css-selector` finding in that scan is downgraded to `low`, and its `reason` says plainly how many usage-source files could not be analyzed. The text report also prints a `WARNING` line above the findings, and `summary.usageSourceErrors` carries the count in JSON so CI tooling can key off it directly. A `.css` file failing to read does **not** trigger this: losing a definition can only make the tool under-report, never manufacture a false positive, so only usage-source failures downgrade confidence.
 
 ---
 

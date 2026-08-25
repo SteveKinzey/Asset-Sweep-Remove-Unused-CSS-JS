@@ -7,6 +7,7 @@ export function analyzeCss(
   defs: SelectorDef[],
   tokens: UsageToken[],
   config: AssetSweepConfig,
+  usageSourceErrors = 0,
 ): Finding[] {
   const usedClasses = new Set(
     tokens.filter(t => t.kind === 'class').map(t => t.value))
@@ -34,7 +35,7 @@ export function analyzeCss(
     }
     seen.add(key)
 
-    const { confidence, reason } = scoreCssFinding()
+    const { confidence, reason } = scoreCssFinding(usageSourceErrors)
     findings.push({
       type: 'css-selector', name: def.name, file: def.file,
       line: def.line, column: def.column, bytes: def.bytes,

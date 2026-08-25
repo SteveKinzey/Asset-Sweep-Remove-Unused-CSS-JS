@@ -1,4 +1,4 @@
-import { mkdtemp, writeFile } from 'node:fs/promises'
+import { chmod, mkdtemp, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join, resolve } from 'node:path'
 import { jest } from '@jest/globals'
@@ -102,4 +102,48 @@ test('an invalid --min-confidence value exits 2', async () => {
   const spy = jest.spyOn(console, 'error').mockImplementation(() => {})
   expect(await main(['scan', dir, '--min-confidence', 'nonsense'])).toBe(2)
   spy.mockRestore()
+})
+
+test('an unreadable usage-source (.html) file downgrades findings to low confidence, not a false "medium"', async () => {
+  const dir = await project({
+    'styles.css': '.only-in-html { color: red }',
+    'index.html': '<div class="only-in-html"></div>',
+  })
+  const htmlPath = join(dir, 'index.html')
+  await chmod(htmlPath, 0o000) // simulate an unreadable file
+
+  try {
+    const result = await scan(dir)
+
+    const finding = result.findings.find(f => f.name === 'only-in-html')
+    expect(finding).toBeDefined()
+    expect(finding?.confidence).toBe('low')
+    expect(finding?.reason).toMatch(/usage-source/i)
+    expect(finding?.reason).toMatch(/could not be read/i)
+    expect(result.summary.usageSourceErrors).toBe(1)
+  } finally {
+    await chmod(htmlPath, 0o644) // restore, so temp-dir cleanup can remove it
+  }
+})
+
+test('a failed .css file alone does not downgrade findings, since it only loses definitions', async () => {
+  const dir = await project({
+    'good.css': '.ghost { color: blue }',
+    'broken.css': '.also-fine { color: red }',
+    'index.html': '<div></div>',
+  })
+  const cssPath = join(dir, 'broken.css')
+  await chmod(cssPath, 0o000) // simulate an unreadable .css (not a usage source)
+
+  try {
+    const result = await scan(dir)
+
+    const finding = result.findings.find(f => f.name === 'ghost')
+    expect(finding).toBeDefined()
+    expect(finding?.confidence).toBe('medium')
+    expect(result.summary.usageSourceErrors).toBe(0)
+    expect(result.summary.errors).toBe(1)
+  } finally {
+    await chmod(cssPath, 0o644)
+  }
 })

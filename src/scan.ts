@@ -28,15 +28,22 @@ export async function scan(
   const tokens: UsageToken[] = []
   const errors: ScanError[] = []
   let filesAnalyzed = 0
+  // Files that contribute UsageTokens (currently only .html). If one of
+  // these fails to read or parse, the surviving token set is incomplete
+  // and can no longer prove a class/id is unused — see analyze/confidence.ts.
+  let usageSourceErrors = 0
 
   for (const file of files) {
     // Labels are relative to the caller's cwd (not the scan root), so a
     // printed "src/styles.css:2" resolves from where the user is standing
     // and is clickable in a terminal/editor, matching eslint/tsc/jest.
     const label = relative(process.cwd(), file)
+    // Computed outside the try so a file that fails to even *read* is still
+    // classified correctly below (extname works on the path, not the
+    // content).
+    const ext = extname(file)
     try {
       const source = await readFile(file, 'utf8')
-      const ext = extname(file)
       if (ext === '.css') {
         defs.push(...parseCss(source, label))
         filesAnalyzed++
@@ -47,10 +54,13 @@ export async function scan(
       // Other extensions are discovered but not yet parsed; Phase 2 adds them.
     } catch (err) {
       errors.push({ file: label, message: (err as Error).message })
+      if (ext === '.html') {
+        usageSourceErrors++
+      }
     }
   }
 
-  const findings = analyzeCss(defs, tokens, config)
+  const findings = analyzeCss(defs, tokens, config, usageSourceErrors)
   const savings = findings.reduce((sum, f) => sum + f.bytes, 0)
 
   return {
@@ -62,6 +72,7 @@ export async function scan(
       errors: errors.length,
       semanticMode: false,
       totalCssSelectors: defs.length,
+      usageSourceErrors,
     },
     findings,
     errors,
