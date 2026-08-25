@@ -1,6 +1,13 @@
-import type { ScanResult, Confidence } from '../types.js'
+import type { ScanResult, Confidence, Finding } from '../types.js'
 
 const ORDER: Confidence[] = ['high', 'medium', 'low']
+
+// Class findings render as `.name`, id findings as `#name`. Finding.name
+// itself carries no sigil (JSON consumers rely on the bare name), so the
+// report layer derives the sigil from selectorKind at render time.
+function sigil(f: Finding): string {
+  return f.selectorKind === 'id' ? '#' : '.'
+}
 
 export function renderText(result: ScanResult): string {
   const { summary, findings, errors } = result
@@ -34,13 +41,13 @@ export function renderText(result: ScanResult): string {
     if (distinctReasons.length === 1) {
       // Single reason: print group-level "why:" line (preserves Phase 1 output)
       for (const f of group) {
-        lines.push(`  .${f.name}  ${f.file}:${f.line}  ${f.bytes} bytes`)
+        lines.push(`  ${sigil(f)}${f.name}  ${f.file}:${f.line}  ${f.bytes} bytes`)
       }
       lines.push(`  why: ${distinctReasons[0]}`)
     } else {
       // Multiple reasons: print each finding's reason with that finding
       for (const f of group) {
-        lines.push(`  .${f.name}  ${f.file}:${f.line}  ${f.bytes} bytes`)
+        lines.push(`  ${sigil(f)}${f.name}  ${f.file}:${f.line}  ${f.bytes} bytes`)
         lines.push(`    reason: ${f.reason}`)
       }
     }

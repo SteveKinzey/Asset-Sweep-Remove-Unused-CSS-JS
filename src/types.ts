@@ -20,6 +20,10 @@ export interface Finding extends Position {
   bytes: number
   confidence: Confidence
   reason: string
+  // Only set for type: 'css-selector'. Distinguishes a class (`.foo`) from
+  // an id (`#foo`) finding so report renderers print the right sigil —
+  // Finding.name itself stays a bare name with no sigil for JSON consumers.
+  selectorKind?: 'class' | 'id'
 }
 
 export interface ScanError { file: string; message: string }

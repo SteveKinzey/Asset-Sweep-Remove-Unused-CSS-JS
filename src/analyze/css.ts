@@ -39,6 +39,10 @@ export function analyzeCss(
       type: 'css-selector', name: def.name, file: def.file,
       line: def.line, column: def.column, bytes: def.bytes,
       confidence, reason,
+      // def.kind is 'class' | 'id' | 'other' here, but 'other' is always
+      // treated as used above and never reaches this push, so it is
+      // safe (and type-correct) to narrow it to 'class' | 'id'.
+      selectorKind: def.kind as 'class' | 'id',
     })
   }
 

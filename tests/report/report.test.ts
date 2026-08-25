@@ -80,3 +80,24 @@ test('a group with two findings with different reasons prints each reason with i
   expect(out).toContain('ghost')
   expect(out).toContain('unused')
 })
+
+test('a class finding renders with a . sigil and an id finding renders with a # sigil', () => {
+  const mixed: ScanResult = {
+    summary: { ...result.summary, unusedCss: 2, totalCssSelectors: 5 },
+    findings: [
+      { type: 'css-selector', name: 'ghost', file: 'styles.css', line: 2,
+        column: 1, bytes: 22, confidence: 'medium',
+        reason: 'JavaScript was not analyzed.', selectorKind: 'class' },
+      { type: 'css-selector', name: 'ghost-id', file: 'styles.css', line: 6,
+        column: 1, bytes: 25, confidence: 'medium',
+        reason: 'JavaScript was not analyzed.', selectorKind: 'id' },
+    ],
+    errors: [],
+  }
+  const out = renderText(mixed)
+  // Assert the exact rendered token, so a regression to a hardcoded `.`
+  // prefix on every line (the bug this test guards against) fails it.
+  expect(out).toContain('.ghost  styles.css:2')
+  expect(out).toContain('#ghost-id  styles.css:6')
+  expect(out).not.toContain('.ghost-id')
+})
