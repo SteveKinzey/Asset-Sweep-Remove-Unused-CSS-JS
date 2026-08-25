@@ -280,10 +280,15 @@ asset-sweep scan ./src --include "**/*.{vue,js,ts,css}"
 
 `.vue` files are not parsed yet either (see the reality check above) — Single File Component `<template>` markup is invisible to `scan` today, so classes used only inside `.vue` templates will be misreported as unused until safelisted or until `.vue` support ships.
 
-Vue scoped styles compile to `data-v-*` attributes — safelist them. `ignoreSelectors` patterns are anchored (like `ignoreClasses`): the pattern must match the **entire** raw selector text of the rule, not just a fragment of it. A compiled scoped-style rule looks like `[data-v-f3f3eg9] .my-class { ... }`, so `"[data-v-*]"` alone won't match it — it doesn't cover the trailing ` .my-class`. Cover the whole selector instead:
+Vue scoped styles compile to `data-v-*` attributes — safelist them. `ignoreSelectors` patterns are anchored (like `ignoreClasses`): the pattern must match the **entire** raw selector text of the rule, not just a fragment of it. Vue emits the attribute in **two different shapes**, and a safelist pattern that covers only one still leaves the other reported as unused:
+
+- The attribute on the element's own selector — the common case for an ordinary scoped style: `.my-class[data-v-f3f3eg9] { ... }`
+- The attribute on an ancestor, with a descendant combinator — what `:deep()` produces: `[data-v-f3f3eg9] .my-class { ... }`
+
+A single pattern with a wildcard on both sides covers both shapes:
 
 ```json
-{ "ignoreSelectors": ["[data-v-*] *"] }
+{ "ignoreSelectors": ["*[data-v-*]*"] }
 ```
 
 ### Static HTML sites

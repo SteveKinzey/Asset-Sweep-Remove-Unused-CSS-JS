@@ -19,11 +19,13 @@ export function isSafelisted(
   config: AssetSweepConfig,
 ): boolean {
   // ignoreSelectors matches against the full raw selector text of the
-  // rule (e.g. `[data-v-1] .scoped`); ignoreClasses matches against a
-  // single class name. Both require the pattern to cover the ENTIRE
-  // string, so a pattern like "[data-v-*] *" is needed to safelist a
-  // compound selector — "[data-v-*]" alone will not, since it doesn't
-  // cover the trailing " .scoped" — see the README for the working recipe.
+  // rule (e.g. `[data-v-1] .scoped` or `.scoped[data-v-1]` — Vue emits
+  // both shapes for scoped styles); ignoreClasses matches against a single
+  // class name. Both require the pattern to cover the ENTIRE string, so a
+  // pattern like "*[data-v-*]*" is needed to safelist either compound
+  // shape — "[data-v-*]" alone will not, since it doesn't cover text
+  // before/after the attribute selector — see the README for the working
+  // recipe.
   if (config.ignoreSelectors.some(p => globToRegExp(p).test(def.raw))) {
     return true
   }

@@ -51,22 +51,32 @@ test('a short ignoreSelectors pattern does not swallow unrelated selectors', () 
   expect(isSafelisted(def('beta', '.beta'), cfg)).toBe(false)
 })
 
-// The documented Vue scoped-styles recipe: under anchored matching,
-// "[data-v-*]" alone cannot match "[data-v-1] .scoped" (it doesn't cover
-// the trailing " .scoped"). "[data-v-*] *" covers the whole selector and
-// is the pattern actually documented in the README.
-test('the documented Vue scoped-styles pattern safelists a compound data-v selector', () => {
-  const cfg = { ...DEFAULT_CONFIG, ignoreSelectors: ['[data-v-*] *'] }
-  expect(isSafelisted(def('scoped', '[data-v-1] .scoped'), cfg)).toBe(true)
+// The documented Vue scoped-styles recipe. Vue emits scoped styles in
+// TWO shapes: the attribute on the element's own selector
+// (".my-class[data-v-xxx]" — the common case for an ordinary scoped
+// style) AND the attribute on an ancestor with a descendant combinator
+// ("[data-v-xxx] .my-class" — what :deep() produces). "[data-v-*] *"
+// alone (the round-2 recipe) only covers the second shape. "*[data-v-*]*"
+// covers both, since under anchored matching the leading/trailing "*"
+// allow arbitrary text before/after the attribute selector wherever it
+// falls in the compound selector.
+test('the documented Vue pattern safelists the element-attribute shape (.my-class[data-v-xxx])', () => {
+  const cfg = { ...DEFAULT_CONFIG, ignoreSelectors: ['*[data-v-*]*'] }
+  expect(isSafelisted(def('scoped', '.my-class[data-v-f3f3eg9]'), cfg)).toBe(true)
 })
 
-test('the documented Vue scoped-styles pattern does not safelist an unrelated selector', () => {
-  const cfg = { ...DEFAULT_CONFIG, ignoreSelectors: ['[data-v-*] *'] }
+test('the documented Vue pattern safelists the descendant-attribute shape ([data-v-xxx] .my-class)', () => {
+  const cfg = { ...DEFAULT_CONFIG, ignoreSelectors: ['*[data-v-*]*'] }
+  expect(isSafelisted(def('scoped', '[data-v-f3f3eg9] .my-class'), cfg)).toBe(true)
+})
+
+test('the documented Vue pattern does not safelist an unrelated selector', () => {
+  const cfg = { ...DEFAULT_CONFIG, ignoreSelectors: ['*[data-v-*]*'] }
   expect(isSafelisted(def('alpha', '.alpha'), cfg)).toBe(false)
 })
 
 test('a non-matching ignoreSelectors glob does not safelist', () => {
-  const cfg = { ...DEFAULT_CONFIG, ignoreSelectors: ['[data-v-*] *'] }
+  const cfg = { ...DEFAULT_CONFIG, ignoreSelectors: ['*[data-v-*]*'] }
   expect(isSafelisted(def('x', '.unrelated'), cfg)).toBe(false)
 })
 
