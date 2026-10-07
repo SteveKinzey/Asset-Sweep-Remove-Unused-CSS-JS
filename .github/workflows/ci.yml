@@ -1,22 +1,11 @@
 # CI for Asset Sweep.
-#
-# Automatic triggers are intentionally disabled: there is no `src/` yet, so
-# lint, type-check, build, and test would fail on every push and leave the
-# repository showing a permanently red badge.
-#
-# When the scanner lands, re-enable automatic runs by replacing the `on:`
-# block below with:
-#
-#   on:
-#     push:
-#       branches: [main, develop]
-#     pull_request:
-#       branches: [main, develop]
-#
-# Until then the workflow can still be run by hand from the Actions tab.
 name: CI
 
 on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
   workflow_dispatch:
 
 jobs:
