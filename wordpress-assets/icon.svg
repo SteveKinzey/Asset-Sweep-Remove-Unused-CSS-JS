@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#1e2a5a"/>
+      <stop offset="1" stop-color="#0f1533"/>
+    </linearGradient>
+    <linearGradient id="broom" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#2dd4bf"/>
+      <stop offset="1" stop-color="#14b8a6"/>
+    </linearGradient>
+  </defs>
+
+  <!-- background -->
+  <rect width="256" height="256" rx="0" fill="url(#bg)"/>
+
+  <!-- faint code bits being swept away (top-right, fading) -->
+  <g font-family="Menlo, Consolas, monospace" font-weight="700">
+    <text x="168" y="66" font-size="26" fill="#8b95c9" opacity="0.55">&lt;/&gt;</text>
+    <text x="196" y="104" font-size="18" fill="#8b95c9" opacity="0.35">{ }</text>
+    <text x="152" y="120" font-size="14" fill="#8b95c9" opacity="0.22">css</text>
+    <text x="205" y="140" font-size="12" fill="#8b95c9" opacity="0.15">js</text>
+  </g>
+
+  <!-- sweep motion arcs -->
+  <g stroke="#2dd4bf" stroke-linecap="round" fill="none">
+    <path d="M 150 172 q 34 -6 58 -30" stroke-width="7" opacity="0.85"/>
+    <path d="M 154 192 q 44 -4 74 -34" stroke-width="6" opacity="0.5"/>
+    <path d="M 152 211 q 54 -2 88 -36" stroke-width="5" opacity="0.28"/>
+  </g>
+
+  <!-- broom handle -->
+  <g transform="rotate(38 96 150)">
+    <rect x="90" y="18" width="13" height="118" rx="6.5" fill="#e9edf9"/>
+    <!-- ferrule -->
+    <rect x="82" y="130" width="29" height="16" rx="5" fill="#14b8a6"/>
+    <!-- broom head -->
+    <path d="M 80 146 L 113 146 L 126 208 L 67 208 Z" fill="url(#broom)"/>
+    <!-- bristle lines -->
+    <g stroke="#0d9488" stroke-width="4" stroke-linecap="round">
+      <line x1="82" y1="158" x2="76" y2="202"/>
+      <line x1="96.5" y1="158" x2="96.5" y2="202"/>
+      <line x1="111" y1="158" x2="117" y2="202"/>
+    </g>
+    <!-- bristle tips -->
+    <path d="M 67 208 L 126 208 L 128 216 L 65 216 Z" fill="#0f766e"/>
+  </g>
+</svg>
