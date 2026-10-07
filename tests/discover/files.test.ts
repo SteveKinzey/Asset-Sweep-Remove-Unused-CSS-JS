@@ -1,6 +1,6 @@
 import { mkdtemp, mkdir, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
-import { join } from 'node:path'
+import { basename, join } from 'node:path'
 import { discoverFiles } from '../../src/discover/files.js'
 import { DEFAULT_CONFIG } from '../../src/config/defaults.js'
 
@@ -16,7 +16,7 @@ async function fixture() {
 test('finds matching files and excludes node_modules', async () => {
   const dir = await fixture()
   const files = await discoverFiles(dir, DEFAULT_CONFIG)
-  const names = files.map(f => f.split('/').pop()).sort()
+  const names = files.map(f => basename(f)).sort()
   expect(names).toEqual(['a.css', 'b.html'])
 })
 
@@ -33,6 +33,6 @@ test('excludes a nested node_modules directory, not just a top-level one', async
   await writeFile(join(dir, 'packages', 'foo', 'kept.css'), '.k{}')
 
   const files = await discoverFiles(dir, DEFAULT_CONFIG)
-  const names = files.map(f => f.split('/').pop()).sort()
+  const names = files.map(f => basename(f)).sort()
   expect(names).toEqual(['a.css', 'b.html', 'kept.css'])
 })
