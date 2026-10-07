@@ -76,6 +76,8 @@ export async function main(argv: string[]): Promise<number> {
     if (args.output) {
       await writeFile(args.output, output, 'utf8')
     } else {
+      // The report is the CLI's output, so it belongs on stdout.
+      // eslint-disable-next-line no-console
       console.log(output)
     }
 

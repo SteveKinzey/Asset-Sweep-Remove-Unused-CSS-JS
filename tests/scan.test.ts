@@ -5,6 +5,14 @@ import { jest } from '@jest/globals'
 import { scan } from '../src/scan.js'
 import { main } from '../src/cli.js'
 
+// These tests make a file unreadable with chmod 000. That has no effect on
+// Windows (no POSIX permission bits) or as root (which bypasses them), so
+// the read would succeed and the test would assert against a scan that
+// never hit the error path. Skip them there instead of reporting a false
+// failure.
+const canMakeUnreadable = process.platform !== 'win32' && process.getuid?.() !== 0
+const testIfUnreadable = canMakeUnreadable ? test : test.skip
+
 async function project(files: Record<string, string>) {
   const dir = await mkdtemp(join(tmpdir(), 'as-'))
   for (const [name, body] of Object.entries(files)) {
@@ -279,7 +287,7 @@ test('an invalid --min-confidence value exits 2', async () => {
   spy.mockRestore()
 })
 
-test('an unreadable usage-source (.html) file downgrades findings to low confidence, not a false "medium"', async () => {
+testIfUnreadable('an unreadable usage-source (.html) file downgrades findings to low confidence, not a false "medium"', async () => {
   const dir = await project({
     'styles.css': '.only-in-html { color: red }',
     'index.html': '<div class="only-in-html"></div>',
@@ -322,7 +330,7 @@ describe('.htm and .xhtml are treated exactly like .html, not silently unsupport
     expect(result.summary.filesAnalyzed).toBe(2)
   })
 
-  test('a failed .htm parse increments usageSourceErrors exactly as a failed .html does', async () => {
+  testIfUnreadable('a failed .htm parse increments usageSourceErrors exactly as a failed .html does', async () => {
     const dir = await project({
       'styles.css': '.only-in-htm { color: red }',
       'index.htm': '<div class="only-in-htm"></div>',
@@ -342,7 +350,7 @@ describe('.htm and .xhtml are treated exactly like .html, not silently unsupport
   })
 })
 
-test('a failed .css file alone does not downgrade findings, since it only loses definitions', async () => {
+testIfUnreadable('a failed .css file alone does not downgrade findings, since it only loses definitions', async () => {
   const dir = await project({
     'good.css': '.ghost { color: blue }',
     'broken.css': '.also-fine { color: red }',
@@ -436,7 +444,7 @@ describe('a usage-source read failure must never let the exit code report succes
     return { dir, htmlPath }
   }
 
-  test('an unreadable usage-source file exits 1 under --min-confidence medium, not 0 (regression)', async () => {
+  testIfUnreadable('an unreadable usage-source file exits 1 under --min-confidence medium, not 0 (regression)', async () => {
     const { dir, htmlPath } = await projectWithUnreadableHtml()
     const spy = jest.spyOn(console, 'log').mockImplementation(() => {})
     try {
@@ -448,7 +456,7 @@ describe('a usage-source read failure must never let the exit code report succes
     }
   })
 
-  test('an unreadable usage-source file exits 1 under --threshold 100', async () => {
+  testIfUnreadable('an unreadable usage-source file exits 1 under --threshold 100', async () => {
     const { dir, htmlPath } = await projectWithUnreadableHtml()
     const spy = jest.spyOn(console, 'log').mockImplementation(() => {})
     try {
@@ -460,7 +468,7 @@ describe('a usage-source read failure must never let the exit code report succes
     }
   })
 
-  test('an unreadable usage-source file exits 1 under --min-confidence high (zero surviving findings)', async () => {
+  testIfUnreadable('an unreadable usage-source file exits 1 under --min-confidence high (zero surviving findings)', async () => {
     const { dir, htmlPath } = await projectWithUnreadableHtml()
     const spy = jest.spyOn(console, 'log').mockImplementation(() => {})
     try {

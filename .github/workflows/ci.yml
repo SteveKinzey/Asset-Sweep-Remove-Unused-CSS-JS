@@ -1,23 +1,16 @@
 # CI for Asset Sweep.
-#
-# Automatic triggers are intentionally disabled: there is no `src/` yet, so
-# lint, type-check, build, and test would fail on every push and leave the
-# repository showing a permanently red badge.
-#
-# When the scanner lands, re-enable automatic runs by replacing the `on:`
-# block below with:
-#
-#   on:
-#     push:
-#       branches: [main, develop]
-#     pull_request:
-#       branches: [main, develop]
-#
-# Until then the workflow can still be run by hand from the Actions tab.
 name: CI
 
 on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
   workflow_dispatch:
+
+# Pull requests run contributor code; the jobs only need to read the repo.
+permissions:
+  contents: read
 
 jobs:
   test:
@@ -30,6 +23,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
 
       - name: Use Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v4
@@ -66,6 +61,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
 
       - name: Use Node.js
         uses: actions/setup-node@v4
