@@ -1,0 +1,91 @@
+<!doctype html>
+<html><head><meta charset="utf-8">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 1544px; height: 500px; overflow: hidden; }
+  body {
+    font-family: 'Inter', sans-serif;
+    background:
+      radial-gradient(900px 500px at 85% 20%, rgba(56, 189, 248, 0.18), transparent 60%),
+      radial-gradient(700px 420px at 10% 110%, rgba(52, 211, 153, 0.16), transparent 60%),
+      linear-gradient(135deg, #0b1220 0%, #111a2e 55%, #0d1526 100%);
+    color: #e6edf7;
+    position: relative;
+  }
+  .grid {
+    position: absolute; inset: 0;
+    background-image:
+      linear-gradient(rgba(148, 163, 184, 0.06) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(148, 163, 184, 0.06) 1px, transparent 1px);
+    background-size: 40px 40px;
+    mask-image: linear-gradient(90deg, transparent, #000 30%, #000 70%, transparent);
+  }
+  .left { position: absolute; left: 96px; top: 50%; transform: translateY(-50%); width: 760px; }
+  .badge {
+    display: inline-flex; align-items: center; gap: 10px;
+    font-size: 18px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase;
+    color: #6ee7b7; padding: 8px 16px; border: 1px solid rgba(110, 231, 183, 0.35);
+    border-radius: 999px; background: rgba(16, 185, 129, 0.08); margin-bottom: 28px;
+  }
+  .badge i { width: 8px; height: 8px; border-radius: 50%; background: #34d399; display: block; }
+  h1 { font-family: 'Inter Display', 'Inter', sans-serif; font-weight: 800; font-size: 104px; line-height: 1; letter-spacing: -0.03em; }
+  h1 span {
+    background: linear-gradient(90deg, #38bdf8, #34d399);
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+  }
+  p.tag { margin-top: 22px; font-size: 32px; font-weight: 500; color: #b6c2d6; letter-spacing: -0.01em; }
+  .stats { margin-top: 36px; display: flex; gap: 14px; }
+  .stat {
+    font-size: 20px; font-weight: 600; color: #cbd5e1;
+    padding: 10px 18px; border-radius: 12px; white-space: nowrap;
+    background: rgba(148, 163, 184, 0.08); border: 1px solid rgba(148, 163, 184, 0.16);
+  }
+  .stat b { color: #fff; }
+
+  .editor {
+    position: absolute; right: 80px; top: 50%; transform: translateY(-50%); width: 572px;
+    border-radius: 18px; overflow: hidden;
+    background: rgba(15, 23, 42, 0.85);
+    border: 1px solid rgba(148, 163, 184, 0.18);
+    box-shadow: 0 30px 80px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(56, 189, 248, 0.05);
+  }
+  .bar { height: 44px; display: flex; align-items: center; gap: 8px; padding: 0 18px; background: rgba(30, 41, 59, 0.9); border-bottom: 1px solid rgba(148, 163, 184, 0.12); }
+  .bar i { width: 12px; height: 12px; border-radius: 50%; display: block; }
+  .bar .file { margin-left: 14px; font: 500 15px 'DejaVu Sans Mono', monospace; color: #94a3b8; }
+  .bar .pill { margin-left: auto; font: 600 13px 'Inter', sans-serif; color: #fca5a5; background: rgba(248, 113, 113, 0.12); border: 1px solid rgba(248, 113, 113, 0.3); padding: 4px 10px; border-radius: 999px; }
+  pre { padding: 20px 24px 22px; font: 400 19px/1.62 'DejaVu Sans Mono', monospace; color: #cbd5e1; }
+  .ln { display: block; position: relative; }
+  .sel { color: #7dd3fc; }
+  .prop { color: #a5b4fc; }
+  .val { color: #fcd34d; }
+  .dead { opacity: 0.38; }
+  .dead::after {
+    content: ''; position: absolute; left: -6px; right: 40px; top: 52%; height: 2px;
+    background: #f87171; opacity: 0.9;
+  }
+  .ok { position: absolute; right: 0; color: #34d399; font-weight: 700; }
+  .x { position: absolute; right: 0; color: #f87171; font-weight: 700; opacity: 1; }
+</style></head>
+<body>
+  <div class="grid"></div>
+
+  <div class="left">
+    <div class="badge"><i></i>Find &amp; remove dead code</div>
+    <h1>Asset <span>Sweep</span></h1>
+    <p class="tag">Remove unused CSS &amp; JavaScript.</p>
+    <div class="stats">
+      <div class="stat"><b>Smaller</b> stylesheets</div>
+      <div class="stat"><b>Faster</b> page loads</div>
+      <div class="stat"><b>WordPress</b> plugin + CLI</div>
+    </div>
+  </div>
+
+  <div class="editor">
+    <div class="bar">
+      <i style="background:#f87171"></i><i style="background:#fbbf24"></i><i style="background:#34d399"></i>
+      <span class="file">styles.css</span>
+      <span class="pill">3 unused selectors</span>
+    </div>
+    <pre><span class="ln"><span class="sel">.header</span> { <span class="prop">display</span>: <span class="val">flex</span>; }<span class="ok">✓</span></span><span class="ln dead"><span class="sel">.promo-banner-2019</span> { <span class="prop">color</span>: <span class="val">red</span>; }</span><span class="ln"><span class="sel">.nav a</span> { <span class="prop">padding</span>: <span class="val">8px</span>; }<span class="ok">✓</span></span><span class="ln dead"><span class="sel">#legacy-slider</span> { <span class="prop">height</span>: <span class="val">420px</span>; }</span><span class="ln"><span class="sel">.btn-primary</span> { <span class="prop">bg</span>: <span class="val">#0ea5e9</span>; }<span class="ok">✓</span></span><span class="ln dead"><span class="sel">.old-modal</span> { <span class="prop">z-index</span>: <span class="val">999</span>; }</span><span class="ln"><span class="sel">.footer</span> { <span class="prop">margin</span>: <span class="val">0 auto</span>; }<span class="ok">✓</span></span></pre>
+  </div>
+</body></html>
