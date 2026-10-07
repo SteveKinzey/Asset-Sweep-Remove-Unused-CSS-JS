@@ -76,6 +76,10 @@ npm run lint              # Check code style
 ```
 
 For the WordPress plugin:
+- Run the PHP syntax check used by CI (requires PHP):
+  ```bash
+  find wordpress-plugin -name '*.php' -print0 | xargs -0 -n 1 php -l
+  ```
 - Test on a fresh WordPress install
 - Test with Elementor, Divi, and standard Gutenberg
 - Verify all toggles work independently
