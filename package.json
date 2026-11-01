@@ -46,8 +46,8 @@
     "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js",
     "test:watch": "node --experimental-vm-modules node_modules/jest/bin/jest.js --watch",
     "test:coverage": "node --experimental-vm-modules node_modules/jest/bin/jest.js --coverage",
-    "lint": "eslint src --ext .ts,.tsx,.js,.jsx",
-    "lint:fix": "eslint src --ext .ts,.tsx,.js,.jsx --fix",
+    "lint": "eslint src",
+    "lint:fix": "eslint src --fix",
     "format": "prettier --write \"src/**/*.{ts,tsx,js,jsx,json,md}\"",
     "type-check": "tsc --noEmit",
     "benchmark": "node scripts/benchmark.js",
@@ -62,17 +62,18 @@
     "postcss-selector-parser": "^7.1.6"
   },
   "devDependencies": {
+    "@eslint/js": "^9.39.5",
     "@types/jest": "^30.0.0",
     "@types/minimist": "^1.2.5",
     "@types/node": "^20.14.0",
-    "@typescript-eslint/eslint-plugin": "^8.0.0",
-    "@typescript-eslint/parser": "^8.0.0",
-    "eslint": "^8.57.0",
+    "eslint": "^9.39.5",
+    "globals": "^17.14.0",
     "jest": "^30.5.2",
     "prettier": "^3.0.0",
     "ts-jest": "^29.4.14",
     "tsx": "^4.7.0",
-    "typescript": "^5.2.0"
+    "typescript": "^5.2.0",
+    "typescript-eslint": "^8.72.1"
   },
   "overrides": {
     "@istanbuljs/load-nyc-config": {
