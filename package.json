@@ -37,7 +37,7 @@
     "url": "https://github.com/SteveKinzey/Asset-Sweep-Remove-Unused-CSS-JS/issues"
   },
   "engines": {
-    "node": ">=18.0.0",
+    "node": "20 || >=22",
     "npm": ">=9.0.0"
   },
   "scripts": {

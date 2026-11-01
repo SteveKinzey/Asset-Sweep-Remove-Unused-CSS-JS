@@ -46,7 +46,7 @@ Enhancement suggestions are tracked as GitHub issues. When creating an enhanceme
 ## Development Setup
 
 ### Prerequisites
-- Node.js 14.0.0 or higher
+- Node.js 20 or 22+
 - npm or yarn
 
 ### Getting Started
