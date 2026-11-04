@@ -46,7 +46,7 @@ Enhancement suggestions are tracked as GitHub issues. When creating an enhanceme
 ## Development Setup
 
 ### Prerequisites
-- Node.js 20 or 22+
+- Node.js 20.19+, 22.13+ or 24+ (ESLint 10 needs these minor versions; the published package itself runs on any Node 20 or 22+)
 - npm or yarn
 
 ### Getting Started

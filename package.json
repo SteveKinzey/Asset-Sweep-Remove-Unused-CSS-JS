@@ -62,11 +62,11 @@
     "postcss-selector-parser": "^7.1.6"
   },
   "devDependencies": {
-    "@eslint/js": "^9.39.5",
+    "@eslint/js": "^10.0.1",
     "@types/jest": "^30.0.0",
     "@types/minimist": "^1.2.5",
     "@types/node": "^20.14.0",
-    "eslint": "^9.39.5",
+    "eslint": "^10.14.0",
     "globals": "^17.14.0",
     "jest": "^30.5.2",
     "prettier": "^3.0.0",
@@ -78,6 +78,7 @@
   "overrides": {
     "@istanbuljs/load-nyc-config": {
       "js-yaml": "^4.1.0"
-    }
+    },
+    "minimatch": "^11.0.3"
   }
 }
