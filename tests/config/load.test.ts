@@ -31,6 +31,12 @@ test('malformed config rejects rather than silently defaulting', async () => {
   await expect(loadConfig(dir)).rejects.toThrow(/\.asset-sweeprc\.json/)
 })
 
+test('a malformed config error keeps the JSON parse error as its cause', async () => {
+  const dir = await mkdtemp(join(tmpdir(), 'as-'))
+  await writeFile(join(dir, '.asset-sweeprc.json'), '{ not json')
+  await expect(loadConfig(dir)).rejects.toMatchObject({ cause: expect.any(SyntaxError) })
+})
+
 test('a wrong-typed array field is rejected with the offending key named', async () => {
   const dir = await mkdtemp(join(tmpdir(), 'as-'))
   await writeFile(join(dir, '.asset-sweeprc.json'),

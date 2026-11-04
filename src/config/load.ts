@@ -65,7 +65,7 @@ async function readJson(path: string): Promise<unknown | undefined> {
   try {
     return JSON.parse(raw)    // present but broken is not
   } catch (err) {
-    throw new Error(`Could not parse ${path}: ${(err as Error).message}`)
+    throw new Error(`Could not parse ${path}: ${(err as Error).message}`, { cause: err })
   }
 }
 
