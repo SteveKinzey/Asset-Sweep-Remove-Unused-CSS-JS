@@ -10,7 +10,7 @@ export default tseslint.config(
     languageOptions: {
       ecmaVersion: 2020,
       sourceType: 'module',
-      globals: { ...globals.node, ...globals.jest },
+      globals: { ...globals.node, ...globals.vitest },
     },
     rules: {
       'no-console': ['warn', { allow: ['warn', 'error'] }],

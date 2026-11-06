@@ -40,16 +40,23 @@
     "node": "20 || >=22",
     "npm": ">=9.0.0"
   },
+  "devEngines": {
+    "runtime": {
+      "name": "node",
+      "version": "^20.19.0 || ^22.13.0 || >=24.0.0",
+      "onFail": "error"
+    }
+  },
   "scripts": {
     "dev": "tsx src/index.ts",
     "build": "tsc",
-    "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js",
-    "test:watch": "node --experimental-vm-modules node_modules/jest/bin/jest.js --watch",
-    "test:coverage": "node --experimental-vm-modules node_modules/jest/bin/jest.js --coverage",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
     "lint": "eslint src",
     "lint:fix": "eslint src --fix",
     "format": "prettier --write \"src/**/*.{ts,tsx,js,jsx,json,md}\"",
-    "type-check": "tsc --noEmit",
+    "type-check": "tsc --noEmit && tsc --noEmit -p tsconfig.test.json",
     "benchmark": "node scripts/benchmark.js",
     "prepublishOnly": "npm run build && npm test && npm run verify:artifacts",
     "verify:artifacts": "node -e \"const fs=require('fs'),m=['dist/index.js','bin/cli.js'].filter(p=>!fs.existsSync(p));if(m.length){console.error('\\u2716 refusing to publish, missing build output: '+m.join(', '));process.exit(1)}console.log('\\u2714 build artifacts present')\""
@@ -63,22 +70,18 @@
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
-    "@types/jest": "^30.0.0",
     "@types/minimist": "^1.2.5",
     "@types/node": "^20.14.0",
+    "@vitest/coverage-v8": "^4.1.12",
     "eslint": "^10.14.0",
     "globals": "^17.14.0",
-    "jest": "^30.5.2",
     "prettier": "^3.0.0",
-    "ts-jest": "^29.4.14",
     "tsx": "^4.7.0",
     "typescript": "^5.2.0",
-    "typescript-eslint": "^8.72.1"
+    "typescript-eslint": "^8.72.1",
+    "vitest": "^4.1.12"
   },
   "overrides": {
-    "@istanbuljs/load-nyc-config": {
-      "js-yaml": "^4.1.0"
-    },
     "minimatch": "^11.0.3",
     "glob": "$glob"
   }
