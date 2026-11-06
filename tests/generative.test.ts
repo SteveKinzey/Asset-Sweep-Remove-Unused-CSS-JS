@@ -17,7 +17,7 @@
 import { mkdtemp, writeFile, rm } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { jest } from '@jest/globals'
+import { vi } from 'vitest'
 import { scan } from '../src/scan.js'
 import { main } from '../src/cli.js'
 
@@ -383,7 +383,7 @@ describe('generative: --threshold exit code matches an arbitrary randomized rati
   const BASE_SEED = 842026
 
   test(`exit 1 below the ratio and exit 0 at/above it, across ${ITERATIONS} randomized ratios`, async () => {
-    const logSpy = jest.spyOn(console, 'log').mockImplementation(() => {})
+    const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {})
     try {
       for (let i = 0; i < ITERATIONS; i++) {
         const rng = mulberry32(BASE_SEED + i)

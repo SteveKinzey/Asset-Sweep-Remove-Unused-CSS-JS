@@ -1,7 +1,7 @@
 import { chmod, mkdtemp, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join, resolve } from 'node:path'
-import { jest } from '@jest/globals'
+import { vi } from 'vitest'
 import { scan } from '../src/scan.js'
 import { main } from '../src/cli.js'
 
@@ -158,7 +158,7 @@ describe('inline <style> blocks in HTML are scanned for definitions', () => {
 
     test('the run exits non-zero', async () => {
       const dir = await brokenStyleProject()
-      const spy = jest.spyOn(console, 'log').mockImplementation(() => {})
+      const spy = vi.spyOn(console, 'log').mockImplementation(() => {})
       try {
         const code = await main(['scan', dir])
         expect(code).not.toBe(0)
@@ -248,7 +248,7 @@ test('--threshold is a percentage of unused CSS selectors, not files', async () 
     'styles.css': '.a{color:red}\n.b{color:red}\n.c{color:red}\n.d{color:blue}',
     'index.html': '<div class="a b c"></div>',
   })
-  const spy = jest.spyOn(console, 'log').mockImplementation(() => {})
+  const spy = vi.spyOn(console, 'log').mockImplementation(() => {})
   // 1 of 4 selectors unused = 25%: trips a 20% threshold, not a 30% one.
   const failCode = await main(['scan', dir, '--threshold', '20'])
   const passCode = await main(['scan', dir, '--threshold', '30'])
@@ -273,7 +273,7 @@ test('--min-confidence high hides Phase 1 medium findings', async () => {
     'index.html': '<div></div>',
   })
   const logged: string[] = []
-  const spy = jest.spyOn(console, 'log')
+  const spy = vi.spyOn(console, 'log')
     .mockImplementation(m => { logged.push(String(m)) })
   await main(['scan', dir, '--min-confidence', 'high'])
   spy.mockRestore()
@@ -282,7 +282,7 @@ test('--min-confidence high hides Phase 1 medium findings', async () => {
 
 test('an invalid --min-confidence value exits 2', async () => {
   const dir = await project({ 'a.css': '.x{}', 'i.html': '<p></p>' })
-  const spy = jest.spyOn(console, 'error').mockImplementation(() => {})
+  const spy = vi.spyOn(console, 'error').mockImplementation(() => {})
   expect(await main(['scan', dir, '--min-confidence', 'nonsense'])).toBe(2)
   spy.mockRestore()
 })
@@ -387,42 +387,42 @@ describe('--threshold validation', () => {
 
   test('a non-numeric --threshold exits 2 rather than silently disabling the gate', async () => {
     const dir = await allUnusedProject()
-    const spy = jest.spyOn(console, 'error').mockImplementation(() => {})
+    const spy = vi.spyOn(console, 'error').mockImplementation(() => {})
     expect(await main(['scan', dir, '--threshold', 'abc'])).toBe(2)
     spy.mockRestore()
   })
 
   test('a bare --threshold with no value exits 2 rather than being coerced to 1', async () => {
     const dir = await allUnusedProject()
-    const spy = jest.spyOn(console, 'error').mockImplementation(() => {})
+    const spy = vi.spyOn(console, 'error').mockImplementation(() => {})
     expect(await main(['scan', dir, '--threshold'])).toBe(2)
     spy.mockRestore()
   })
 
   test('a negative --threshold exits 2', async () => {
     const dir = await allUnusedProject()
-    const spy = jest.spyOn(console, 'error').mockImplementation(() => {})
+    const spy = vi.spyOn(console, 'error').mockImplementation(() => {})
     expect(await main(['scan', dir, '--threshold', '-5'])).toBe(2)
     spy.mockRestore()
   })
 
   test('a --threshold above 100 exits 2', async () => {
     const dir = await allUnusedProject()
-    const spy = jest.spyOn(console, 'error').mockImplementation(() => {})
+    const spy = vi.spyOn(console, 'error').mockImplementation(() => {})
     expect(await main(['scan', dir, '--threshold', '101'])).toBe(2)
     spy.mockRestore()
   })
 
   test('--threshold 0 is accepted and fails a project with any unused selectors', async () => {
     const dir = await allUnusedProject()
-    const spy = jest.spyOn(console, 'log').mockImplementation(() => {})
+    const spy = vi.spyOn(console, 'log').mockImplementation(() => {})
     expect(await main(['scan', dir, '--threshold', '0'])).toBe(1)
     spy.mockRestore()
   })
 
   test('--threshold 100 is accepted and never fails, since ratio can never exceed 100', async () => {
     const dir = await allUnusedProject()
-    const spy = jest.spyOn(console, 'log').mockImplementation(() => {})
+    const spy = vi.spyOn(console, 'log').mockImplementation(() => {})
     expect(await main(['scan', dir, '--threshold', '100'])).toBe(0)
     spy.mockRestore()
   })
@@ -446,7 +446,7 @@ describe('a usage-source read failure must never let the exit code report succes
 
   testIfUnreadable('an unreadable usage-source file exits 1 under --min-confidence medium, not 0 (regression)', async () => {
     const { dir, htmlPath } = await projectWithUnreadableHtml()
-    const spy = jest.spyOn(console, 'log').mockImplementation(() => {})
+    const spy = vi.spyOn(console, 'log').mockImplementation(() => {})
     try {
       const code = await main(['scan', dir, '--min-confidence', 'medium'])
       expect(code).toBe(1)
@@ -458,7 +458,7 @@ describe('a usage-source read failure must never let the exit code report succes
 
   testIfUnreadable('an unreadable usage-source file exits 1 under --threshold 100', async () => {
     const { dir, htmlPath } = await projectWithUnreadableHtml()
-    const spy = jest.spyOn(console, 'log').mockImplementation(() => {})
+    const spy = vi.spyOn(console, 'log').mockImplementation(() => {})
     try {
       const code = await main(['scan', dir, '--threshold', '100'])
       expect(code).toBe(1)
@@ -470,7 +470,7 @@ describe('a usage-source read failure must never let the exit code report succes
 
   testIfUnreadable('an unreadable usage-source file exits 1 under --min-confidence high (zero surviving findings)', async () => {
     const { dir, htmlPath } = await projectWithUnreadableHtml()
-    const spy = jest.spyOn(console, 'log').mockImplementation(() => {})
+    const spy = vi.spyOn(console, 'log').mockImplementation(() => {})
     try {
       const code = await main(['scan', dir, '--min-confidence', 'high'])
       expect(code).toBe(1)
@@ -485,8 +485,8 @@ describe('a usage-source read failure must never let the exit code report succes
       'styles.css': '.ghost { color: red }',
       'index.html': '<div></div>',
     })
-    const logSpy = jest.spyOn(console, 'log').mockImplementation(() => {})
-    const errSpy = jest.spyOn(console, 'error').mockImplementation(() => {})
+    const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {})
+    const errSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
     try {
       expect(await main(['scan', dir, '--threshold', '100'])).toBe(0)
       expect(await main(['scan', dir, '--threshold', '0'])).toBe(1)
